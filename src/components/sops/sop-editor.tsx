@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Save } from "lucide-react";
 import { SOPTags } from "@/components/sops/sop-tags";
 import { STATUS_LABELS } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ interface Section { id?: string; type: string; title: string; content: string; o
 
 interface SOPEditorProps {
   sop: {
+    id: string;
     title: string;
     description: string | null;
     purpose: string | null;
@@ -77,6 +79,15 @@ export function SOPEditor({ sop, onUpdate, onSaveSections }: SOPEditorProps) {
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm">Tags</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SOPTags sopId={sop.id} />
         </CardContent>
       </Card>
 

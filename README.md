@@ -1,36 +1,167 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pryro SOP — AI-Powered SOP Generator
 
-## Getting Started
+A production-ready AI-powered platform for creating, managing, and exporting professional Standard Operating Procedures.
 
-First, run the development server:
+## Features
+
+- **AI SOP Generation** — Describe a process in plain English; AI generates a complete professional SOP
+- **AI Writing Tools** — Improve, rewrite, fix grammar, summarize, simplify, translate any section
+- **Multi-Provider AI** — OpenAI, Anthropic, Groq, OpenRouter, DeepSeek, Mistral, custom OpenAI-compatible APIs
+- **Full SOP Editor** — Edit every section: purpose, scope, workflow, checklist, responsibilities, resources
+- **SOP Management** — Create, edit, duplicate, archive, favorite, delete, search, filter
+- **Export** — Export SOPs as professionally formatted HTML (printable as PDF)
+- **Comments** — Comment threads on each SOP
+- **Activity Log** — Full audit trail of all changes
+- **Dashboard** — Stats, recent SOPs, activity feed, AI usage tracking
+- **Command Palette** — ⌘K quick navigation and SOP search
+- **Dark / Light Mode** — System-aware theme switching
+- **Responsive** — Works on desktop and mobile
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router, Server Components)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **UI Components**: Radix UI primitives
+- **Animations**: Framer Motion
+- **Auth**: NextAuth v5 (JWT strategy)
+- **Database**: PostgreSQL + Prisma ORM
+- **Forms**: React Hook Form + Zod
+- **State**: TanStack Query
+
+## Setup
+
+### 1. Prerequisites
+
+- Node.js 18+
+- PostgreSQL 14+ running locally or remotely
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment
+
+Edit `.env`:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/pryro_sop"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="generate-a-32-char-secret-here"
+```
+
+Generate a secret:
+```bash
+openssl rand -base64 32
+```
+
+### 4. Create the database
+
+```sql
+CREATE DATABASE pryro_sop;
+```
+
+### 5. Run migrations
+
+```bash
+npx prisma migrate dev --name init
+```
+
+### 6. Generate Prisma client
+
+```bash
+npx prisma generate
+```
+
+### 7. Start development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## AI Configuration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+After signing up, go to **Settings → AI Provider** to configure your AI keys:
 
-## Learn More
+| Provider | Models |
+|----------|--------|
+| OpenAI | gpt-4o, gpt-4o-mini, gpt-4-turbo |
+| Anthropic | claude-3-5-sonnet, claude-3-haiku |
+| Groq | llama-3.3-70b, mixtral-8x7b |
+| OpenRouter | Any model |
+| DeepSeek | deepseek-chat, deepseek-reasoner |
+| Mistral | mistral-large, mistral-small |
+| Custom | Any OpenAI-compatible API |
 
-To learn more about Next.js, take a look at the following resources:
+API keys are stored encrypted in the database per user.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/
+│   ├── (auth)/          # Login, register pages
+│   ├── (app)/           # Protected app pages
+│   │   ├── dashboard/   # Dashboard
+│   │   ├── sops/        # SOP list, new, detail
+│   │   └── settings/    # AI & profile settings
+│   └── api/             # API routes
+│       ├── ai/          # generate, improve, settings
+│       ├── auth/        # NextAuth + register
+│       ├── sops/        # CRUD + workflow/checklist/comments
+│       └── dashboard/   # Stats
+├── components/
+│   ├── ui/              # All UI primitives (Radix-based)
+│   ├── layout/          # Sidebar + header
+│   ├── sops/            # SOP editor, workflow, checklist, etc.
+│   ├── dashboard/       # Dashboard client
+│   ├── settings/        # Settings forms
+│   └── auth/            # Login/register forms
+├── lib/
+│   ├── db.ts            # Prisma client
+│   ├── auth.ts          # NextAuth config
+│   ├── ai.ts            # AI provider abstraction
+│   └── utils.ts         # Helpers + constants
+└── hooks/
+    └── use-debounce.ts
+```
 
-## Deploy on Vercel
+## Database Schema
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Key models:
+- **User** — Authentication, role, org membership
+- **SOP** — Main document with status, versioning
+- **SOPSection** — Document sections (purpose, scope, etc.)
+- **WorkflowStep** — Ordered process steps
+- **ChecklistItem** — Verification checklist
+- **Responsibility** — Roles & responsibilities
+- **Resource** — Required resources/tools
+- **Comment** — Threaded comments
+- **Activity** — Audit log
+- **AIGeneration** — AI usage tracking
+- **AISettings** — Per-user AI provider config
+- **ExportHistory** — Export tracking
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Production build
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npx prisma studio    # Open Prisma database GUI
+npx prisma migrate dev  # Run pending migrations
+```
+
+## Deployment
+
+The app is ready to deploy to any Node.js host (Vercel, Railway, Render, etc.).
+
+Set these environment variables in production:
+- `DATABASE_URL` — PostgreSQL connection string
+- `NEXTAUTH_URL` — Your production URL
+- `NEXTAUTH_SECRET` — A strong random secret (32+ chars)

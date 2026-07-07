@@ -1,0 +1,387 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(EMPLOYEE)
+  organizationId String?
+  departmentId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  department    Department?   @relation(fields: [departmentId], references: [id])
+  sops          SOP[]         @relation("SOPAuthor")
+  accounts      Account[]
+  sessions      Session[]
+  comments      Comment[]
+  approvals     Approval[]
+  activities    Activity[]
+  acknowledgements Acknowledgement[]
+  aiSettings    AISettings?
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logo        String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  departments Department[]
+  categories  Category[]
+  sops        SOP[]
+
+  @@map("organizations")
+}
+
+model Department {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users        User[]
+  sops         SOP[]
+
+  @@map("departments")
+}
+
+model Category {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  color          String?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sops         SOP[]
+
+  @@map("categories")
+}
+
+model SOP {
+  id             String    @id @default(cuid())
+  title          String
+  description    String?
+  purpose        String?
+  scope          String?
+  processName    String?
+  status         SOPStatus @default(DRAFT)
+  isAIGenerated  Boolean   @default(false)
+  isFavorite     Boolean   @default(false)
+  isArchived     Boolean   @default(false)
+  version        Int       @default(1)
+  authorId       String
+  organizationId String?
+  departmentId   String?
+  categoryId     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  publishedAt    DateTime?
+
+  author           User          @relation("SOPAuthor", fields: [authorId], references: [id])
+  organization     Organization? @relation(fields: [organizationId], references: [id])
+  department       Department?   @relation(fields: [departmentId], references: [id])
+  category         Category?     @relation(fields: [categoryId], references: [id])
+  sections         SOPSection[]
+  workflowSteps    WorkflowStep[]
+  checklistItems   ChecklistItem[]
+  responsibilities Responsibility[]
+  resources        Resource[]
+  comments         Comment[]
+  approvals        Approval[]
+  versions         SOPVersion[]
+  activities       Activity[]
+  acknowledgements Acknowledgement[]
+  aiGenerations    AIGeneration[]
+  exportHistory    ExportHistory[]
+  tags             SOPTag[]
+
+  @@map("sops")
+}
+
+model SOPSection {
+  id        String   @id @default(cuid())
+  sopId     String
+  type      String
+  title     String
+  content   String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@map("sop_sections")
+}
+
+model WorkflowStep {
+  id          String   @id @default(cuid())
+  sopId       String
+  stepNumber  Int
+  title       String
+  description String?
+  role        String?
+  duration    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_steps")
+}
+
+model ChecklistItem {
+  id          String   @id @default(cuid())
+  sopId       String
+  text        String
+  isRequired  Boolean  @default(false)
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@map("checklist_items")
+}
+
+model Responsibility {
+  id          String   @id @default(cuid())
+  sopId       String
+  role        String
+  description String
+  order       Int
+  createdAt   DateTime @default(now())
+
+  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@map("responsibilities")
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  sopId       String
+  name        String
+  type        String?
+  description String?
+  order       Int
+  createdAt   DateTime @default(now())
+
+  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@map("resources")
+}
+
+model SOPTag {
+  id    String @id @default(cuid())
+  sopId String
+  tag   String
+
+  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@unique([sopId, tag])
+  @@map("sop_tags")
+}
+
+model SOPVersion {
+  id        String   @id @default(cuid())
+  sopId     String
+  version   Int
+  title     String
+  content   Json
+  changes   String?
+  createdBy String
+  createdAt DateTime @default(now())
+
+  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@map("sop_versions")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  sopId     String
+  authorId  String
+  content   String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sop    SOP      @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  author User     @relation(fields: [authorId], references: [id])
+  parent Comment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+model Approval {
+  id        String         @id @default(cuid())
+  sopId     String
+  approverId String
+  status    ApprovalStatus @default(PENDING)
+  comment   String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  sop      SOP  @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  approver User @relation(fields: [approverId], references: [id])
+
+  @@map("approvals")
+}
+
+model Acknowledgement {
+  id           String   @id @default(cuid())
+  sopId        String
+  userId       String
+  acknowledgedAt DateTime @default(now())
+
+  sop  SOP  @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([sopId, userId])
+  @@map("acknowledgements")
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  sopId       String?
+  userId      String
+  action      String
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  sop  SOP?  @relation(fields: [sopId], references: [id], onDelete: SetNull)
+  user User  @relation(fields: [userId], references: [id])
+
+  @@map("activities")
+}
+
+model AIGeneration {
+  id          String   @id @default(cuid())
+  sopId       String?
+  userId      String
+  provider    String
+  model       String
+  prompt      String
+  result      Json?
+  tokensUsed  Int?
+  cost        Float?
+  createdAt   DateTime @default(now())
+
+  sop SOP? @relation(fields: [sopId], references: [id], onDelete: SetNull)
+
+  @@map("ai_generations")
+}
+
+model AISettings {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  provider        String   @default("openai")
+  model           String   @default("gpt-4o-mini")
+  apiKey          String?
+  baseUrl         String?
+  temperature     Float    @default(0.7)
+  maxTokens       Int      @default(4000)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_settings")
+}
+
+model ExportHistory {
+  id         String   @id @default(cuid())
+  sopId      String
+  userId     String
+  format     String
+  fileName   String
+  createdAt  DateTime @default(now())
+
+  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@map("export_history")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ORG_ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum SOPStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+}

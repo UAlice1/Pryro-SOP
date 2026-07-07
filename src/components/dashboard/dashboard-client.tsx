@@ -193,11 +193,26 @@ export function DashboardClient({ userName }: { userName: string }) {
             <div className="w-9 h-9 rounded-lg bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-purple-500" />
             </div>
-            <div>
-              <p className="text-sm font-medium">AI Usage</p>
-              <p className="text-xs text-muted-foreground"><strong>{stats.aiUsage}</strong> AI generations total · <strong>{stats.aiGenerated}</strong> AI-generated SOPs</p>
+            <div className="flex-1">
+              <p className="text-sm font-medium">AI Usage Statistics</p>
+              <div className="flex items-center gap-4 mt-1">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">{stats.aiUsage}</p>
+                  <p className="text-[10px] text-muted-foreground">Total Generations</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">{stats.aiGenerated}</p>
+                  <p className="text-[10px] text-muted-foreground">AI-Generated SOPs</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">{stats.total > 0 ? Math.round((stats.aiGenerated / stats.total) * 100) : 0}%</p>
+                  <p className="text-[10px] text-muted-foreground">AI Adoption Rate</p>
+                </div>
+              </div>
             </div>
-            <Button variant="outline" size="sm" className="ml-auto" asChild>
+            <Button variant="outline" size="sm" asChild>
               <Link href="/settings">Configure AI</Link>
             </Button>
           </CardContent>

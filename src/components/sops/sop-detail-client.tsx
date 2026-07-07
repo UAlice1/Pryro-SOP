@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, Star, Copy, Archive, Trash2, Download, Sparkles,
   FileText, CheckSquare, Users, BookOpen, Activity,
+  GitMerge, History, Lightbulb, MessageSquareMore, Printer,
 } from "lucide-react";
 import { STATUS_LABELS, STATUS_COLORS, formatDateTime } from "@/lib/utils";
 import { SOPEditor } from "@/components/sops/sop-editor";
@@ -18,7 +20,11 @@ import { SOPWorkflow } from "@/components/sops/sop-workflow";
 import { SOPChecklist } from "@/components/sops/sop-checklist";
 import { SOPComments } from "@/components/sops/sop-comments";
 import { SOPActivityLog } from "@/components/sops/sop-activity-log";
-import { AIToolbar } from "@/components/sops/ai-toolbar";
+import { AIRewritePanel } from "@/components/sops/ai-rewrite-panel";
+import { SOPApproval } from "@/components/sops/sop-approval";
+import { SOPVersions } from "@/components/sops/sop-versions";
+import { SOPInsights } from "@/components/sops/sop-insights";
+import { SOPAIAssistant } from "@/components/sops/sop-ai-assistant";
 
 interface SOPData {
   id: string;
@@ -27,8 +33,10 @@ interface SOPData {
   purpose: string | null;
   scope: string | null;
   status: string;
+  authorId: string;
   isAIGenerated: boolean;
   isFavorite: boolean;
+  isArchived: boolean;
   version: number;
   updatedAt: string;
   createdAt: string;
@@ -38,6 +46,7 @@ interface SOPData {
   responsibilities: Array<{ id: string; role: string; description: string; order: number }>;
   resources: Array<{ id: string; name: string; type: string | null; description: string | null; order: number }>;
   comments: unknown[];
+  approvals: Array<{ id: string; status: string; comment: string | null; createdAt: string; updatedAt: string; approver: { id: string; name: string | null; image: string | null } }>;
   activities: Array<{ id: string; action: string; description: string | null; createdAt: string; user: { id: string; name: string | null; image: string | null } }>;
   department?: { name: string };
   category?: { name: string; color: string };
@@ -46,6 +55,8 @@ interface SOPData {
 
 export function SOPDetailClient({ id }: { id: string }) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const currentUserId = (session?.user as { id?: string })?.id ?? "";
   const [sop, setSop] = useState<SOPData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -78,6 +89,20 @@ export function SOPDetailClient({ id }: { id: string }) {
       }
     } catch { toast.error("Failed to save"); }
     finally { setSaving(false); }
+  };
+
+  const handleArchive = async () => {
+    const isArchived = sop?.isArchived ?? false;
+    const res = await fetch(`/api/sops/${id}/archive`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archive: !isArchived }),
+    });
+    if (res.ok) {
+      toast.success(isArchived ? "SOP restored" : "SOP archived");
+      if (!isArchived) router.push("/sops");
+      else fetchSOP();
+    }
   };
 
   const handleDelete = async () => {
@@ -155,23 +180,72 @@ export function SOPDetailClient({ id }: { id: string }) {
           <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
             <Download className="w-3.5 h-3.5" />
           </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()} title="Print SOP">
+            <Printer className="w-3.5 h-3.5" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleArchive} title={sop.isArchived ? "Restore SOP" : "Archive SOP"}>
+            <Archive className="w-3.5 h-3.5" />
+          </Button>
           <Button variant="outline" size="sm" onClick={handleDuplicate}><Copy className="w-3.5 h-3.5" /></Button>
           <Button variant="outline" size="sm" onClick={handleDelete} className="text-destructive hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></Button>
         </div>
       </div>
 
-      {/* AI Toolbar */}
-      <AIToolbar sopId={id} onRefresh={fetchSOP} />
+      {/* AI Generation Tools */}
+      <AIRewritePanel
+        sopId={id}
+        sopStatus={sop.status}
+        onRefresh={fetchSOP}
+        onApplySections={async (sections) => {
+          await fetch(`/api/sops/${id}/sections`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sections }),
+          });
+        }}
+        onApplyWorkflow={async (steps) => {
+          await fetch(`/api/sops/${id}/workflow`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ steps }),
+          });
+        }}
+        onApplyChecklist={async (items, mode) => {
+          const existing = mode === "append" ? sop.checklistItems : [];
+          const merged = [
+            ...existing,
+            ...items.map((item, i) => ({
+              text: item.text,
+              isRequired: item.isRequired,
+              order: existing.length + i + 1,
+            })),
+          ];
+          await fetch(`/api/sops/${id}/checklist`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: merged }),
+          });
+        }}
+      />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="h-9">
-          <TabsTrigger value="editor" className="text-xs gap-1.5"><FileText className="w-3.5 h-3.5" /> Editor</TabsTrigger>
-          <TabsTrigger value="workflow" className="text-xs gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Workflow</TabsTrigger>
-          <TabsTrigger value="checklist" className="text-xs gap-1.5"><CheckSquare className="w-3.5 h-3.5" /> Checklist</TabsTrigger>
-          <TabsTrigger value="comments" className="text-xs gap-1.5"><Users className="w-3.5 h-3.5" /> Comments</TabsTrigger>
-          <TabsTrigger value="activity" className="text-xs gap-1.5"><Activity className="w-3.5 h-3.5" /> Activity</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto scrollbar-hide">
+          <TabsList className="h-9 w-max">
+            <TabsTrigger value="editor" className="text-xs gap-1.5"><FileText className="w-3.5 h-3.5" /> Editor</TabsTrigger>
+            <TabsTrigger value="workflow" className="text-xs gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Workflow</TabsTrigger>
+            <TabsTrigger value="checklist" className="text-xs gap-1.5"><CheckSquare className="w-3.5 h-3.5" /> Checklist</TabsTrigger>
+            <TabsTrigger value="approval" className="text-xs gap-1.5">
+              <GitMerge className="w-3.5 h-3.5" /> Approval
+              {sop.status === "REVIEW" && <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 ml-0.5" />}
+            </TabsTrigger>
+            <TabsTrigger value="versions" className="text-xs gap-1.5"><History className="w-3.5 h-3.5" /> Versions</TabsTrigger>
+            <TabsTrigger value="insights" className="text-xs gap-1.5"><Lightbulb className="w-3.5 h-3.5" /> Insights</TabsTrigger>
+            <TabsTrigger value="assistant" className="text-xs gap-1.5"><MessageSquareMore className="w-3.5 h-3.5" /> AI Assistant</TabsTrigger>
+            <TabsTrigger value="comments" className="text-xs gap-1.5"><Users className="w-3.5 h-3.5" /> Comments</TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs gap-1.5"><Activity className="w-3.5 h-3.5" /> Activity</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="editor" className="mt-4">
           <SOPEditor sop={sop} onUpdate={handleUpdate} onSaveSections={async (sections) => {
@@ -183,15 +257,42 @@ export function SOPDetailClient({ id }: { id: string }) {
             toast.success("Sections saved");
           }} />
         </TabsContent>
+
         <TabsContent value="workflow" className="mt-4">
           <SOPWorkflow sopId={id} steps={sop.workflowSteps} onRefresh={fetchSOP} />
         </TabsContent>
+
         <TabsContent value="checklist" className="mt-4">
           <SOPChecklist sopId={id} items={sop.checklistItems} onRefresh={fetchSOP} />
         </TabsContent>
+
+        <TabsContent value="approval" className="mt-4">
+          <SOPApproval
+            sopId={id}
+            sopStatus={sop.status}
+            authorId={sop.authorId}
+            currentUserId={currentUserId}
+            approvals={sop.approvals ?? []}
+            onRefresh={fetchSOP}
+          />
+        </TabsContent>
+
+        <TabsContent value="versions" className="mt-4">
+          <SOPVersions sopId={id} currentVersion={sop.version} onRefresh={fetchSOP} />
+        </TabsContent>
+
+        <TabsContent value="insights" className="mt-4">
+          <SOPInsights sopId={id} />
+        </TabsContent>
+
+        <TabsContent value="assistant" className="mt-4">
+          <SOPAIAssistant sopId={id} />
+        </TabsContent>
+
         <TabsContent value="comments" className="mt-4">
           <SOPComments sopId={id} comments={sop.comments as never[]} onRefresh={fetchSOP} />
         </TabsContent>
+
         <TabsContent value="activity" className="mt-4">
           <SOPActivityLog activities={sop.activities} />
         </TabsContent>

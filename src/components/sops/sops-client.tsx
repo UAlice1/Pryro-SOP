@@ -15,8 +15,7 @@ import {
 import {
   Plus, Search, FileText, Sparkles, Star, MoreHorizontal,
   Copy, Archive, Trash2, Eye, Filter,
-} from "lucide-react";
-import { STATUS_LABELS, STATUS_COLORS, timeAgo, truncate } from "@/lib/utils";
+} from "lucide-react";import { STATUS_LABELS, STATUS_COLORS, timeAgo, truncate } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { toast } from "sonner";
 
@@ -27,6 +26,7 @@ interface SOP {
   status: string;
   isAIGenerated: boolean;
   isFavorite: boolean;
+  isArchived: boolean;
   updatedAt: string;
   createdAt: string;
   department?: { id: string; name: string };
@@ -79,6 +79,18 @@ export function SOPsClient() {
       toast.success("SOP deleted");
       fetchSops();
     } else toast.error("Failed to delete");
+  };
+
+  const handleArchive = async (id: string, isArchived: boolean) => {
+    const res = await fetch(`/api/sops/${id}/archive`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archive: !isArchived }),
+    });
+    if (res.ok) {
+      toast.success(isArchived ? "SOP restored" : "SOP archived");
+      fetchSops();
+    } else toast.error("Failed");
   };
 
   const handleToggleFavorite = async (id: string, current: boolean) => {
@@ -184,6 +196,9 @@ export function SOPsClient() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDuplicate(sop.id)}>
                           <Copy className="w-4 h-4 mr-2" /> Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleArchive(sop.id, sop.isArchived ?? false)}>
+                          <Archive className="w-4 h-4 mr-2" /> {sop.isArchived ? "Restore" : "Archive"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDelete(sop.id)} className="text-destructive focus:text-destructive">

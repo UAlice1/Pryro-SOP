@@ -31,6 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         },
       },
       approvals: {
+        orderBy: { updatedAt: "desc" },
         include: { approver: { select: { id: true, name: true, image: true } } },
       },
       tags: true,

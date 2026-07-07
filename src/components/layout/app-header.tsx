@@ -8,29 +8,44 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Moon, Sun, Search, LogOut, User, Settings } from "lucide-react";
+import { Moon, Sun, Search, LogOut, User, Settings, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 import type { User as AuthUser } from "next-auth";
 import { CommandPalette } from "@/components/command-palette";
 import { useState } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { AppSidebarContent } from "@/components/layout/app-sidebar";
 
 export function AppHeader({ user }: { user: AuthUser }) {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const initials = user.name?.split(" ").map((n) => n[0]).join("").toUpperCase() ?? "U";
 
   return (
     <>
       <header className="h-14 border-b border-border bg-background/80 backdrop-blur-sm flex items-center justify-between px-4 shrink-0 sticky top-0 z-40">
-        <button
-          onClick={() => setCmdOpen(true)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg px-3 py-1.5 transition-colors hover:bg-accent w-64"
-        >
-          <Search className="w-3.5 h-3.5" />
-          <span>Search SOPs...</span>
-          <kbd className="ml-auto text-[10px] border border-border rounded px-1 py-0.5 bg-muted">⌘K</kbd>
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 md:hidden"
+            onClick={() => setMobileOpen(true)}
+          >
+            <Menu className="w-4 h-4" />
+          </Button>
+
+          <button
+            onClick={() => setCmdOpen(true)}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg px-3 py-1.5 transition-colors hover:bg-accent w-40 sm:w-64"
+          >
+            <Search className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Search SOPs...</span>
+            <kbd className="ml-auto text-[10px] border border-border rounded px-1 py-0.5 bg-muted hidden sm:block">⌘K</kbd>
+          </button>
+        </div>
 
         <div className="flex items-center gap-2">
           <Button
@@ -54,11 +69,11 @@ export function AppHeader({ user }: { user: AuthUser }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <div className="px-2 py-1.5">
-                <p className="text-sm font-medium">{user.name}</p>
+                <p className="text-sm font-medium truncate">{user.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/settings/profile")}>
+              <DropdownMenuItem onClick={() => router.push("/settings")}>
                 <User className="w-4 h-4 mr-2" /> Profile
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push("/settings")}>
@@ -72,6 +87,14 @@ export function AppHeader({ user }: { user: AuthUser }) {
           </DropdownMenu>
         </div>
       </header>
+
+      {/* Mobile sidebar drawer */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="p-0 w-64">
+          <AppSidebarContent user={user} onNavigate={() => setMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
     </>
   );

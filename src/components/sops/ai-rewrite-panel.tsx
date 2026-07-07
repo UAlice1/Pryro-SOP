@@ -301,8 +301,6 @@ export function AIRewritePanel({ sopId, sopStatus, onRefresh, onApplySections, o
                 />
               </div>
 
-              </div>
-
               {/* Extra AI Generators */}
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2">Additional Generators</p>
@@ -383,6 +381,9 @@ export function AIRewritePanel({ sopId, sopStatus, onRefresh, onApplySections, o
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Preview Panel */}
+              <AnimatePresence>
                 {preview && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
                     <Card className="border-primary/30 bg-primary/5">

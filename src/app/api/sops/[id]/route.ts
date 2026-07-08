@@ -40,6 +40,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         take: 20,
         include: { user: { select: { id: true, name: true, image: true } } },
       },
+      acknowledgements: {
+        where: { userId: session.user.id },
+        select: { acknowledgedAt: true },
+      },
     },
   });
 

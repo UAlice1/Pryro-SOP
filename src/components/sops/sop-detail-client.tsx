@@ -38,6 +38,7 @@ import { SOPAIAssistant } from "@/components/sops/sop-ai-assistant";
 import { SOPResponsibilities } from "@/components/sops/sop-responsibilities";
 import { SOPSafety } from "@/components/sops/sop-safety";
 import { SOPResources } from "@/components/sops/sop-resources";
+import { SOPAcknowledgementBanner } from "@/components/sops/sop-acknowledgement";
 
 interface SOPData {
   id: string;
@@ -64,6 +65,7 @@ interface SOPData {
   department?: { name: string };
   category?: { name: string; color: string };
   author: { name: string | null; image: string | null };
+  acknowledgements?: Array<{ acknowledgedAt: string }>;
 }
 
 export function SOPDetailClient({ id }: { id: string }) {
@@ -260,6 +262,13 @@ export function SOPDetailClient({ id }: { id: string }) {
         </div>
       </div>
 
+      {/* Acknowledgement Banner — shown for PUBLISHED SOPs */}
+      <SOPAcknowledgementBanner
+        sopId={id}
+        sopStatus={sop.status}
+        sopTitle={sop.title}
+      />
+
       {/* AI Generation Tools */}
       <AIRewritePanel
         sopId={id}
@@ -377,7 +386,7 @@ export function SOPDetailClient({ id }: { id: string }) {
         </TabsContent>
 
         <TabsContent value="versions" className="mt-4">
-          <SOPVersions sopId={id} currentVersion={sop.version} onRefresh={fetchSOP} />
+          <SOPVersions sopId={id} currentVersion={sop.version} sopStatus={sop.status} onRefresh={fetchSOP} />
         </TabsContent>
 
         <TabsContent value="insights" className="mt-4">

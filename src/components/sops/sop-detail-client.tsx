@@ -10,9 +10,19 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ArrowLeft, Star, Copy, Archive, Trash2, Download, Sparkles,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ArrowLeft, Star, Copy, Archive, Trash2, Sparkles,
   FileText, CheckSquare, Users, BookOpen, Activity,
   GitMerge, History, Lightbulb, MessageSquareMore, Printer,
+  FileDown, FileType, Globe, ChevronDown, Loader2,
+  ShieldCheck, Package,
 } from "lucide-react";
 import { STATUS_LABELS, STATUS_COLORS, formatDateTime } from "@/lib/utils";
 import { SOPEditor } from "@/components/sops/sop-editor";
@@ -25,6 +35,9 @@ import { SOPApproval } from "@/components/sops/sop-approval";
 import { SOPVersions } from "@/components/sops/sop-versions";
 import { SOPInsights } from "@/components/sops/sop-insights";
 import { SOPAIAssistant } from "@/components/sops/sop-ai-assistant";
+import { SOPResponsibilities } from "@/components/sops/sop-responsibilities";
+import { SOPSafety } from "@/components/sops/sop-safety";
+import { SOPResources } from "@/components/sops/sop-resources";
 
 interface SOPData {
   id: string;
@@ -60,7 +73,7 @@ export function SOPDetailClient({ id }: { id: string }) {
   const [sop, setSop] = useState<SOPData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<"html" | "pdf" | "docx" | null>(null);
   const [activeTab, setActiveTab] = useState("editor");
 
   const fetchSOP = useCallback(async () => {
@@ -112,24 +125,34 @@ export function SOPDetailClient({ id }: { id: string }) {
     router.push("/sops");
   };
 
-  const handleExport = async () => {
-    setExporting(true);
+  const handleExport = async (format: "html" | "pdf" | "docx") => {
+    if (exporting) return;
+    setExporting(format);
     try {
-      const res = await fetch(`/api/sops/${id}/export?format=html`);
-      if (!res.ok) throw new Error("Export failed");
+      const res = await fetch(`/api/sops/${id}/export?format=${format}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "Export failed");
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${sop?.title ?? "sop"}.html`;
+      a.download = `${sop?.title ?? "sop"}.${format}`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success("SOP exported");
-    } catch {
-      toast.error("Export failed");
+      toast.success(`Exported as ${format.toUpperCase()}`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Export failed");
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const handleDuplicate = async () => {
@@ -177,12 +200,58 @@ export function SOPDetailClient({ id }: { id: string }) {
           <Button variant="outline" size="sm" onClick={() => handleUpdate({ isFavorite: !sop.isFavorite })}>
             <Star className={`w-3.5 h-3.5 ${sop.isFavorite ? "fill-yellow-500 text-yellow-500" : ""}`} />
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
-            <Download className="w-3.5 h-3.5" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => window.print()} title="Print SOP">
+
+          {/* Export dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={!!exporting} className="gap-1">
+                {exporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileDown className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden sm:inline text-xs">
+                  {exporting ? `Exporting ${exporting.toUpperCase()}…` : "Export"}
+                </span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuLabel className="text-xs text-muted-foreground">Download as</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => handleExport("pdf")}
+                disabled={!!exporting}
+                className="gap-2 text-sm cursor-pointer"
+              >
+                <FileDown className="w-3.5 h-3.5 text-red-500" />
+                PDF
+                <span className="ml-auto text-[10px] text-muted-foreground">Recommended</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleExport("docx")}
+                disabled={!!exporting}
+                className="gap-2 text-sm cursor-pointer"
+              >
+                <FileType className="w-3.5 h-3.5 text-blue-500" />
+                Word (.docx)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleExport("html")}
+                disabled={!!exporting}
+                className="gap-2 text-sm cursor-pointer"
+              >
+                <Globe className="w-3.5 h-3.5 text-green-500" />
+                HTML
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Print button */}
+          <Button variant="outline" size="sm" onClick={handlePrint} title="Print SOP">
             <Printer className="w-3.5 h-3.5" />
           </Button>
+
           <Button variant="outline" size="sm" onClick={handleArchive} title={sop.isArchived ? "Restore SOP" : "Archive SOP"}>
             <Archive className="w-3.5 h-3.5" />
           </Button>
@@ -235,6 +304,9 @@ export function SOPDetailClient({ id }: { id: string }) {
             <TabsTrigger value="editor" className="text-xs gap-1.5"><FileText className="w-3.5 h-3.5" /> Editor</TabsTrigger>
             <TabsTrigger value="workflow" className="text-xs gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Workflow</TabsTrigger>
             <TabsTrigger value="checklist" className="text-xs gap-1.5"><CheckSquare className="w-3.5 h-3.5" /> Checklist</TabsTrigger>
+            <TabsTrigger value="responsibilities" className="text-xs gap-1.5"><Users className="w-3.5 h-3.5" /> Responsibilities</TabsTrigger>
+            <TabsTrigger value="safety" className="text-xs gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Safety</TabsTrigger>
+            <TabsTrigger value="resources" className="text-xs gap-1.5"><Package className="w-3.5 h-3.5" /> Resources</TabsTrigger>
             <TabsTrigger value="approval" className="text-xs gap-1.5">
               <GitMerge className="w-3.5 h-3.5" /> Approval
               {sop.status === "REVIEW" && <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 ml-0.5" />}
@@ -264,6 +336,33 @@ export function SOPDetailClient({ id }: { id: string }) {
 
         <TabsContent value="checklist" className="mt-4">
           <SOPChecklist sopId={id} items={sop.checklistItems} onRefresh={fetchSOP} />
+        </TabsContent>
+
+        <TabsContent value="responsibilities" className="mt-4">
+          <SOPResponsibilities
+            sopId={id}
+            responsibilities={sop.responsibilities}
+            sopStatus={sop.status}
+            onRefresh={fetchSOP}
+          />
+        </TabsContent>
+
+        <TabsContent value="safety" className="mt-4">
+          <SOPSafety
+            sopId={id}
+            sopStatus={sop.status}
+            existingSafetyContent={sop.sections.find((s) => s.type === "safety")?.content}
+            onRefresh={fetchSOP}
+          />
+        </TabsContent>
+
+        <TabsContent value="resources" className="mt-4">
+          <SOPResources
+            sopId={id}
+            resources={sop.resources}
+            sopStatus={sop.status}
+            onRefresh={fetchSOP}
+          />
         </TabsContent>
 
         <TabsContent value="approval" className="mt-4">

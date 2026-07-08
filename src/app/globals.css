@@ -154,30 +154,70 @@
   }
 }
 
-/* Print styles */
+/* ── Print styles ─────────────────────────────────────────────── */
 @media print {
-  header, nav, aside, .no-print,
+  /* Hide all UI chrome */
+  header, nav, aside, footer,
+  .no-print,
   [data-radix-popper-content-wrapper],
+  [role="toolbar"],
+  [role="tablist"],
+  .tabs-list,
   button:not(.print-visible) {
     display: none !important;
   }
-  body {
+
+  /* Reset layout */
+  html, body {
     background: white !important;
-    color: black !important;
+    color: #1a1a1a !important;
+    font-size: 11pt;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
   }
-  main {
+
+  main, [role="main"] {
     padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
     overflow: visible !important;
   }
-  .print-content {
+
+  /* SOP document area */
+  .print-sop-area {
+    display: block !important;
     max-width: 100% !important;
-    padding: 24px !important;
+    padding: 0 !important;
   }
-  a {
-    text-decoration: none !important;
-    color: inherit !important;
+
+  /* Preserve exact colors in print */
+  .print-color-exact {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  .page-break {
-    page-break-after: always;
+
+  /* Page breaks */
+  h1, h2, h3 { page-break-after: avoid; }
+  .step, .checklist-row, tr { page-break-inside: avoid; }
+  table { page-break-inside: auto; }
+  .page-break { page-break-after: always; }
+  .page-break-before { page-break-before: always; }
+
+  /* Remove link decoration */
+  a { text-decoration: none !important; color: inherit !important; }
+
+  /* Show only active tab content */
+  [role="tabpanel"][hidden] { display: none !important; }
+  [role="tabpanel"]:not([hidden]) { display: block !important; }
+
+  /* Page margins */
+  @page {
+    margin: 20mm 15mm 22mm 15mm;
+    size: A4 portrait;
+  }
+
+  @page :first {
+    margin-top: 15mm;
   }
 }

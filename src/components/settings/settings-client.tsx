@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, Key, Cpu, User, Eye, EyeOff, CheckCircle } from "lucide-react";
+import {
+  Loader2, Save, Key, Cpu, User, Eye, EyeOff, CheckCircle,
+  Building2, Users, Folder, Plus, Trash2, Pencil, X, Check,
+} from "lucide-react";
 import { AI_PROVIDERS } from "@/lib/utils";
 
 interface AIFormState {
@@ -22,7 +27,13 @@ interface AIFormState {
   apiKeyHint: string;
 }
 
-export function SettingsClient() {
+export function SettingsClient({ defaultTab }: { defaultTab?: string }) {
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string })?.role ?? "EMPLOYEE";
+  const isAdmin  = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN";
+
+  const resolvedTab = defaultTab === "admin" && isAdmin ? "admin" : (defaultTab ?? "ai");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -117,10 +128,13 @@ export function SettingsClient() {
         <p className="text-muted-foreground text-sm mt-0.5">Manage your AI configuration and profile.</p>
       </div>
 
-      <Tabs defaultValue="ai">
+      <Tabs defaultValue={resolvedTab}>
         <TabsList>
-          <TabsTrigger value="ai" className="gap-1.5"><Cpu className="w-3.5 h-3.5" /> AI Provider</TabsTrigger>
+          <TabsTrigger value="ai"      className="gap-1.5"><Cpu  className="w-3.5 h-3.5" /> AI Provider</TabsTrigger>
           <TabsTrigger value="profile" className="gap-1.5"><User className="w-3.5 h-3.5" /> Profile</TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="admin" className="gap-1.5"><Building2 className="w-3.5 h-3.5" /> Organization</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="ai" className="mt-4 space-y-4">
@@ -313,6 +327,12 @@ export function SettingsClient() {
         <TabsContent value="profile" className="mt-4">
           <ProfileSettings />
         </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value="admin" className="mt-4">
+            <AdminSettings />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
@@ -374,6 +394,402 @@ function ProfileSettings() {
           <Button onClick={handleSave} disabled={saving || !loaded}>
             {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : <><Save className="w-4 h-4 mr-2" /> Save</>}
           </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface Department { id: string; name: string; description: string | null; _count: { users: number; sops: number } }
+interface Category   { id: string; name: string; color: string | null; _count: { sops: number } }
+interface OrgUser    { id: string; name: string | null; email: string; role: string; departmentId: string | null; image: string | null }
+
+interface OrgData {
+  id: string;
+  name: string;
+  description: string | null;
+  departments: Department[];
+  categories: Category[];
+  users: OrgUser[];
+  _count: { users: number; sops: number };
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  SUPER_ADMIN: "Super Admin",
+  ORG_ADMIN:   "Admin",
+  MANAGER:     "Manager",
+  EMPLOYEE:    "Employee",
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  SUPER_ADMIN: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  ORG_ADMIN:   "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  MANAGER:     "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  EMPLOYEE:    "bg-muted text-muted-foreground",
+};
+
+// ── AdminSettings component ───────────────────────────────────────────────────
+function AdminSettings() {
+  const [org,       setOrg]       = useState<OrgData | null>(null);
+  const [loading,   setLoading]   = useState(true);
+  const [activeTab, setActiveTab] = useState<"departments" | "categories" | "users">("departments");
+
+  const fetchOrg = async () => {
+    setLoading(true);
+    try {
+      const res  = await fetch("/api/admin/org");
+      if (!res.ok) { setOrg(null); return; }
+      setOrg(await res.json());
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchOrg(); }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!org) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <Building2 className="w-8 h-8 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">No organization found.</p>
+          <p className="text-xs text-muted-foreground mt-1">Contact your administrator to set up an organization.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Org overview */}
+      <Card>
+        <CardContent className="p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Building2 className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-base">{org.name}</p>
+            {org.description && <p className="text-xs text-muted-foreground mt-0.5">{org.description}</p>}
+          </div>
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="text-center">
+              <p className="text-xl font-bold">{org._count.users}</p>
+              <p className="text-[10px] text-muted-foreground">Members</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold">{org._count.sops}</p>
+              <p className="text-[10px] text-muted-foreground">SOPs</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold">{org.departments.length}</p>
+              <p className="text-[10px] text-muted-foreground">Depts</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sub-tabs */}
+      <div className="flex rounded-lg border border-border overflow-hidden">
+        {(["departments", "categories", "users"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setActiveTab(t)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium capitalize transition-colors ${
+              activeTab === t
+                ? "bg-primary text-primary-foreground"
+                : "bg-background hover:bg-muted text-muted-foreground"
+            }`}
+          >
+            {t === "departments" && <Folder  className="w-3.5 h-3.5" />}
+            {t === "categories"  && <Folder  className="w-3.5 h-3.5" />}
+            {t === "users"       && <Users   className="w-3.5 h-3.5" />}
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "departments" && (
+        <DepartmentManager
+          departments={org.departments}
+          onRefresh={fetchOrg}
+        />
+      )}
+      {activeTab === "categories" && (
+        <CategoryManager
+          categories={org.categories}
+          onRefresh={fetchOrg}
+        />
+      )}
+      {activeTab === "users" && (
+        <UserManager
+          users={org.users}
+          departments={org.departments}
+          onRefresh={fetchOrg}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Department Manager ────────────────────────────────────────────────────────
+function DepartmentManager({ departments, onRefresh }: { departments: Department[]; onRefresh: () => void }) {
+  const [name,    setName]    = useState("");
+  const [desc,    setDesc]    = useState("");
+  const [saving,  setSaving]  = useState(false);
+  const [editId,  setEditId]  = useState<string | null>(null);
+  const [editName,setEditName]= useState("");
+
+  const handleCreate = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/departments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), description: desc.trim() || undefined }),
+      });
+      if (res.ok) { toast.success("Department created"); setName(""); setDesc(""); onRefresh(); }
+      else { const d = await res.json(); toast.error(d.error ?? "Failed"); }
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2"><Folder className="w-4 h-4" /> Departments</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Create form */}
+        <div className="flex gap-2">
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Department name" className="h-8 text-sm" onKeyDown={(e) => e.key === "Enter" && handleCreate()} />
+          <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description (optional)" className="h-8 text-sm flex-1" />
+          <Button size="sm" className="h-8 shrink-0" onClick={handleCreate} disabled={saving || !name.trim()}>
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+          </Button>
+        </div>
+
+        {/* List */}
+        <div className="space-y-1.5">
+          {departments.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">No departments yet. Create one above.</p>
+          )}
+          {departments.map((d) => (
+            <div key={d.id} className="flex items-center gap-3 px-3 py-2 bg-muted/30 rounded-lg border border-border">
+              {editId === d.id ? (
+                <>
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-7 text-xs flex-1" autoFocus
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter") {
+                        await fetch(`/api/departments/${d.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: editName }) });
+                        setEditId(null); onRefresh(); toast.success("Saved");
+                      }
+                      if (e.key === "Escape") setEditId(null);
+                    }}
+                  />
+                  <button onClick={() => setEditId(null)}><X className="w-3.5 h-3.5 text-muted-foreground" /></button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{d.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{d._count.users} member{d._count.users !== 1 ? "s" : ""} · {d._count.sops} SOP{d._count.sops !== 1 ? "s" : ""}</p>
+                  </div>
+                  <button onClick={() => { setEditId(d.id); setEditName(d.name); }} className="text-muted-foreground hover:text-foreground">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Category Manager ──────────────────────────────────────────────────────────
+const PRESET_COLORS = ["#3b82f6","#8b5cf6","#10b981","#f59e0b","#ef4444","#06b6d4","#ec4899","#84cc16"];
+
+function CategoryManager({ categories, onRefresh }: { categories: Category[]; onRefresh: () => void }) {
+  const [name,   setName]   = useState("");
+  const [color,  setColor]  = useState(PRESET_COLORS[0]);
+  const [saving, setSaving] = useState(false);
+
+  const handleCreate = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), color }),
+      });
+      if (res.ok) { toast.success("Category created"); setName(""); onRefresh(); }
+      else { const d = await res.json(); toast.error(d.error ?? "Failed"); }
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2"><Folder className="w-4 h-4" /> Categories</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Create form */}
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Category name" className="h-8 text-sm" onKeyDown={(e) => e.key === "Enter" && handleCreate()} />
+            <Button size="sm" className="h-8 shrink-0" onClick={handleCreate} disabled={saving || !name.trim()}>
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+            </Button>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground">Color:</span>
+            {PRESET_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(c)}
+                className={`w-5 h-5 rounded-full transition-transform ${color === c ? "ring-2 ring-offset-1 ring-primary scale-125" : "hover:scale-110"}`}
+                style={{ background: c }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="space-y-1.5">
+          {categories.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">No categories yet. Create one above.</p>
+          )}
+          {categories.map((c) => (
+            <div key={c.id} className="flex items-center gap-3 px-3 py-2 bg-muted/30 rounded-lg border border-border">
+              <div className="w-3 h-3 rounded-full shrink-0" style={{ background: c.color ?? "#94a3b8" }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">{c.name}</p>
+                <p className="text-[10px] text-muted-foreground">{c._count.sops} SOP{c._count.sops !== 1 ? "s" : ""}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── User Manager ──────────────────────────────────────────────────────────────
+function UserManager({ users, departments, onRefresh }: { users: OrgUser[]; departments: Department[]; onRefresh: () => void }) {
+  const [editId,      setEditId]      = useState<string | null>(null);
+  const [editRole,    setEditRole]    = useState("");
+  const [editDeptId,  setEditDeptId]  = useState("");
+  const [saving,      setSaving]      = useState(false);
+  const [search,      setSearch]      = useState("");
+
+  const filtered = users.filter((u) =>
+    !search || u.name?.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const startEdit = (u: OrgUser) => {
+    setEditId(u.id);
+    setEditRole(u.role);
+    setEditDeptId(u.departmentId ?? "");
+  };
+
+  const saveEdit = async (userId: string) => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, newRole: editRole, departmentId: editDeptId || null }),
+      });
+      if (res.ok) { toast.success("User updated"); setEditId(null); onRefresh(); }
+      else { const d = await res.json(); toast.error(d.error ?? "Failed"); }
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardTitle className="text-sm flex items-center gap-2"><Users className="w-4 h-4" /> Team Members ({users.length})</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or email…" className="h-8 text-sm" />
+        <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1">
+          {filtered.map((u) => (
+            <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 bg-muted/30 rounded-lg border border-border">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-xs font-bold text-primary">
+                {u.name?.[0]?.toUpperCase() ?? u.email[0].toUpperCase()}
+              </div>
+
+              {editId === u.id ? (
+                /* Edit mode */
+                <div className="flex-1 flex items-center gap-2 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium">{u.name ?? u.email}</p>
+                    <p className="text-[10px] text-muted-foreground">{u.email}</p>
+                  </div>
+                  <Select value={editRole} onValueChange={setEditRole}>
+                    <SelectTrigger className="h-7 w-32 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(ROLE_LABELS).map(([val, label]) => (
+                        <SelectItem key={val} value={val} className="text-xs">{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={editDeptId} onValueChange={setEditDeptId}>
+                    <SelectTrigger className="h-7 w-36 text-xs">
+                      <SelectValue placeholder="Dept" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="" className="text-xs">No Department</SelectItem>
+                      {departments.map((d) => (
+                        <SelectItem key={d.id} value={d.id} className="text-xs">{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" className="h-7 px-2" onClick={() => saveEdit(u.id)} disabled={saving}>
+                    {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                  </Button>
+                  <button onClick={() => setEditId(null)} className="text-muted-foreground hover:text-foreground">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                /* View mode */
+                <>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{u.name ?? "—"}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge className={`text-[10px] px-1.5 py-0 ${ROLE_COLORS[u.role] ?? ROLE_COLORS.EMPLOYEE}`}>
+                      {ROLE_LABELS[u.role] ?? u.role}
+                    </Badge>
+                    {u.departmentId && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        {departments.find((d) => d.id === u.departmentId)?.name ?? "Dept"}
+                      </Badge>
+                    )}
+                  </div>
+                  <button onClick={() => startEdit(u)} className="text-muted-foreground hover:text-foreground shrink-0">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">No users found.</p>
+          )}
         </div>
       </CardContent>
     </Card>

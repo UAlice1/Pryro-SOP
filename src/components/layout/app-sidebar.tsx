@@ -2,22 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, FileText, Plus, Settings, Star, Archive,
-  ChevronLeft, ChevronRight, Sparkles,
+  ChevronLeft, ChevronRight, Sparkles, Building2,
 } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "next-auth";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/sops", label: "All SOPs", icon: FileText },
-  { href: "/sops/new", label: "New SOP", icon: Plus },
-  { href: "/sops?filter=favorites", label: "Favorites", icon: Star },
-  { href: "/sops?filter=archived", label: "Archived", icon: Archive },
-  { href: "/settings", label: "Settings", icon: Settings },
+const BASE_NAV = [
+  { href: "/dashboard",              label: "Dashboard", icon: LayoutDashboard },
+  { href: "/sops",                   label: "All SOPs",  icon: FileText        },
+  { href: "/sops/new",               label: "New SOP",   icon: Plus            },
+  { href: "/sops?filter=favorites",  label: "Favorites", icon: Star            },
+  { href: "/sops?filter=archived",   label: "Archived",  icon: Archive         },
+  { href: "/settings",               label: "Settings",  icon: Settings        },
 ];
 
 function NavItem({ href, label, icon: Icon, collapsed, onNavigate }: {
@@ -58,6 +59,15 @@ export function AppSidebarContent({
   collapsed?: boolean;
   onNavigate?: () => void;
 }) {
+  const { data: session } = useSession();
+  const userRole = (session?.user as { role?: string })?.role ?? "EMPLOYEE";
+  const isAdmin  = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN";
+
+  const navItems = [
+    ...BASE_NAV,
+    ...(isAdmin ? [{ href: "/settings?tab=admin", label: "Admin", icon: Building2 }] : []),
+  ];
+
   const initials = user.name?.split(" ").map((n) => n[0]).join("").toUpperCase() ?? "U";
 
   return (

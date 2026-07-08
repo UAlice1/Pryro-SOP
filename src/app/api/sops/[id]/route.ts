@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { Permission } from "@/lib/permissions";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -80,6 +81,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const role = (session.user as { role?: string }).role ?? "EMPLOYEE";
+  if (!Permission.canDeleteSOPs(role)) {
+    return NextResponse.json({ error: "Insufficient permissions to delete SOPs" }, { status: 403 });
+  }
 
   const { id } = await params;
 

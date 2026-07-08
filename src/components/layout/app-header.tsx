@@ -15,6 +15,7 @@ import { CommandPalette } from "@/components/command-palette";
 import { useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { AppSidebarContent } from "@/components/layout/app-sidebar";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export function AppHeader({ user }: { user: AuthUser }) {
   const { theme, setTheme } = useTheme();
@@ -57,6 +58,8 @@ export function AppHeader({ user }: { user: AuthUser }) {
             <Sun className="w-4 h-4 rotate-0 scale-100 dark:-rotate-90 dark:scale-0 transition-all" />
             <Moon className="absolute w-4 h-4 rotate-90 scale-0 dark:rotate-0 dark:scale-100 transition-all" />
           </Button>
+
+          <NotificationBell />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

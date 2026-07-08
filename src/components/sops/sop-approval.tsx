@@ -28,6 +28,7 @@ interface SOPApprovalProps {
   sopStatus: string;
   authorId: string;
   currentUserId: string;
+  canApprove?: boolean;
   approvals: Approval[];
   onRefresh: () => void;
 }
@@ -59,14 +60,24 @@ const FLOW_STEPS = [
 const STEP_ORDER: Record<string, number> = { DRAFT: 0, REVIEW: 1, APPROVED: 2, PUBLISHED: 3 };
 
 export function SOPApproval({
-  sopId, sopStatus, authorId, currentUserId, approvals, onRefresh,
+  sopId, sopStatus, authorId, currentUserId, canApprove = true, approvals, onRefresh,
 }: SOPApprovalProps) {
   const [comment, setComment]   = useState("");
   const [loading, setLoading]   = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
 
-  const isAuthor      = currentUserId === authorId;
+  const isAuthor       = currentUserId === authorId;
   const allowedActions = TRANSITIONS[sopStatus] ?? [];
+
+  // Filter actions based on role: employees can only submit their own SOPs
+  // Managers+ can approve/reject/publish
+  const permittedActions = allowedActions.filter((action) => {
+    if (action === "submit" || action === "withdraw") return isAuthor;
+    if (["approve", "reject", "request_changes", "publish"].includes(action)) return canApprove;
+    return true;
+  });
+
+  const isReadOnly = !canApprove && !isAuthor;
   const currentStep   = STEP_ORDER[sopStatus] ?? 0;
 
   const handleAction = async (action: string) => {
@@ -148,6 +159,16 @@ export function SOPApproval({
         </CardContent>
       </Card>
 
+      {/* ── Read-only notice for employees ──────────────────── */}
+      {isReadOnly && (
+        <div className="flex items-center gap-2.5 px-3 py-2.5 bg-muted/50 rounded-lg border border-border">
+          <ShieldCheck className="w-4 h-4 text-muted-foreground shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            You have read-only access to this SOP. Only managers and admins can approve or submit.
+          </p>
+        </div>
+      )}
+
       {/* ── Confirmation dialog for destructive actions ─────── */}
       {confirmAction && (
         <Card className="border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20">
@@ -174,10 +195,10 @@ export function SOPApproval({
       )}
 
       {/* ── Action panel ────────────────────────────────────── */}
-      {!confirmAction && allowedActions.length > 0 && (
+      {!confirmAction && permittedActions.length > 0 && (
         <>
           {/* SUBMIT */}
-          {allowedActions.includes("submit") && isAuthor && (
+          {permittedActions.includes("submit") && isAuthor && (
             <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -205,7 +226,7 @@ export function SOPApproval({
           )}
 
           {/* REVIEW ACTIONS */}
-          {allowedActions.includes("approve") && (
+          {permittedActions.includes("approve") && (
             <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Review Decision</CardTitle>
@@ -263,7 +284,7 @@ export function SOPApproval({
           )}
 
           {/* PUBLISH */}
-          {allowedActions.includes("publish") && (
+          {permittedActions.includes("publish") && (
             <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -289,7 +310,7 @@ export function SOPApproval({
           )}
 
           {/* WITHDRAW */}
-          {allowedActions.includes("withdraw") && isAuthor && (
+          {permittedActions.includes("withdraw") && isAuthor && (
             <div className="flex items-center justify-between px-4 py-3 bg-muted/40 rounded-lg border border-border">
               <div>
                 <p className="text-xs font-medium">Withdraw SOP</p>
@@ -313,7 +334,7 @@ export function SOPApproval({
       )}
 
       {/* ── No actions available ─────────────────────────────── */}
-      {allowedActions.length === 0 && (
+      {permittedActions.length === 0 && !confirmAction && (
         <div className="flex items-center gap-2.5 p-3 bg-muted/40 rounded-lg border border-border">
           <ShieldCheck className="w-4 h-4 text-muted-foreground shrink-0" />
           <p className="text-xs text-muted-foreground">

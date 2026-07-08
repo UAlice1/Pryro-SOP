@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { SOPStatus } from "@prisma/client";
+import { Permission } from "@/lib/permissions";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -31,6 +32,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // ── Reviewer actions ──────────────────────────────────────────
   if (action === "approve" || action === "reject" || action === "request_changes") {
+    const role = (session.user as { role?: string }).role ?? "EMPLOYEE";
+    if (!Permission.canApprove(role)) {
+      return NextResponse.json({ error: "Insufficient permissions to review SOPs" }, { status: 403 });
+    }
     if (sop.status !== "REVIEW") {
       return NextResponse.json({ error: "SOP must be in REVIEW status" }, { status: 400 });
     }
@@ -74,6 +79,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // ── Publish (approved → published) ───────────────────────────
   if (action === "publish") {
+    const role = (session.user as { role?: string }).role ?? "EMPLOYEE";
+    if (!Permission.canPublish(role)) {
+      return NextResponse.json({ error: "Only admins can publish SOPs" }, { status: 403 });
+    }
     if (sop.status !== "APPROVED") {
       return NextResponse.json({ error: "Only approved SOPs can be published" }, { status: 400 });
     }

@@ -72,6 +72,11 @@ export function SOPDetailClient({ id }: { id: string }) {
   const router = useRouter();
   const { data: session } = useSession();
   const currentUserId = (session?.user as { id?: string })?.id ?? "";
+  const userRole      = (session?.user as { role?: string })?.role ?? "EMPLOYEE";
+  const canEdit       = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN" || userRole === "MANAGER";
+  const canDelete     = canEdit;
+  const canApprove    = canEdit; // MANAGER+
+
   const [sop, setSop] = useState<SOPData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -221,30 +226,15 @@ export function SOPDetailClient({ id }: { id: string }) {
             <DropdownMenuContent align="end" className="w-44">
               <DropdownMenuLabel className="text-xs text-muted-foreground">Download as</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => handleExport("pdf")}
-                disabled={!!exporting}
-                className="gap-2 text-sm cursor-pointer"
-              >
-                <FileDown className="w-3.5 h-3.5 text-red-500" />
-                PDF
+              <DropdownMenuItem onClick={() => handleExport("pdf")} disabled={!!exporting} className="gap-2 text-sm cursor-pointer">
+                <FileDown className="w-3.5 h-3.5 text-red-500" />PDF
                 <span className="ml-auto text-[10px] text-muted-foreground">Recommended</span>
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleExport("docx")}
-                disabled={!!exporting}
-                className="gap-2 text-sm cursor-pointer"
-              >
-                <FileType className="w-3.5 h-3.5 text-blue-500" />
-                Word (.docx)
+              <DropdownMenuItem onClick={() => handleExport("docx")} disabled={!!exporting} className="gap-2 text-sm cursor-pointer">
+                <FileType className="w-3.5 h-3.5 text-blue-500" />Word (.docx)
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleExport("html")}
-                disabled={!!exporting}
-                className="gap-2 text-sm cursor-pointer"
-              >
-                <Globe className="w-3.5 h-3.5 text-green-500" />
-                HTML
+              <DropdownMenuItem onClick={() => handleExport("html")} disabled={!!exporting} className="gap-2 text-sm cursor-pointer">
+                <Globe className="w-3.5 h-3.5 text-green-500" />HTML
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -254,11 +244,21 @@ export function SOPDetailClient({ id }: { id: string }) {
             <Printer className="w-3.5 h-3.5" />
           </Button>
 
-          <Button variant="outline" size="sm" onClick={handleArchive} title={sop.isArchived ? "Restore SOP" : "Archive SOP"}>
-            <Archive className="w-3.5 h-3.5" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleDuplicate}><Copy className="w-3.5 h-3.5" /></Button>
-          <Button variant="outline" size="sm" onClick={handleDelete} className="text-destructive hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></Button>
+          {canEdit && (
+            <Button variant="outline" size="sm" onClick={handleArchive} title={sop.isArchived ? "Restore SOP" : "Archive SOP"}>
+              <Archive className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          {canEdit && (
+            <Button variant="outline" size="sm" onClick={handleDuplicate}>
+              <Copy className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button variant="outline" size="sm" onClick={handleDelete} className="text-destructive hover:text-destructive">
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -269,42 +269,44 @@ export function SOPDetailClient({ id }: { id: string }) {
         sopTitle={sop.title}
       />
 
-      {/* AI Generation Tools */}
-      <AIRewritePanel
-        sopId={id}
-        sopStatus={sop.status}
-        onRefresh={fetchSOP}
-        onApplySections={async (sections) => {
-          await fetch(`/api/sops/${id}/sections`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sections }),
-          });
-        }}
-        onApplyWorkflow={async (steps) => {
-          await fetch(`/api/sops/${id}/workflow`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ steps }),
-          });
-        }}
-        onApplyChecklist={async (items, mode) => {
-          const existing = mode === "append" ? sop.checklistItems : [];
-          const merged = [
-            ...existing,
-            ...items.map((item, i) => ({
-              text: item.text,
-              isRequired: item.isRequired,
-              order: existing.length + i + 1,
-            })),
-          ];
-          await fetch(`/api/sops/${id}/checklist`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: merged }),
-          });
-        }}
-      />
+      {/* AI Generation Tools — only for editors */}
+      {canEdit && (
+        <AIRewritePanel
+          sopId={id}
+          sopStatus={sop.status}
+          onRefresh={fetchSOP}
+          onApplySections={async (sections) => {
+            await fetch(`/api/sops/${id}/sections`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ sections }),
+            });
+          }}
+          onApplyWorkflow={async (steps) => {
+            await fetch(`/api/sops/${id}/workflow`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ steps }),
+            });
+          }}
+          onApplyChecklist={async (items, mode) => {
+            const existing = mode === "append" ? sop.checklistItems : [];
+            const merged = [
+              ...existing,
+              ...items.map((item, i) => ({
+                text: item.text,
+                isRequired: item.isRequired,
+                order: existing.length + i + 1,
+              })),
+            ];
+            await fetch(`/api/sops/${id}/checklist`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ items: merged }),
+            });
+          }}
+        />
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -380,6 +382,7 @@ export function SOPDetailClient({ id }: { id: string }) {
             sopStatus={sop.status}
             authorId={sop.authorId}
             currentUserId={currentUserId}
+            canApprove={canApprove}
             approvals={sop.approvals ?? []}
             onRefresh={fetchSOP}
           />

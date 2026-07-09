@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,7 +21,7 @@ import {
   FileText, CheckSquare, Users, BookOpen, Activity,
   GitMerge, History, Lightbulb, MessageSquareMore, Printer,
   FileDown, FileType, Globe, ChevronDown, Loader2,
-  ShieldCheck, Package,
+  ShieldCheck, Package, Play, UserPlus,
 } from "lucide-react";
 import { STATUS_LABELS, STATUS_COLORS, formatDateTime } from "@/lib/utils";
 import { SOPEditor } from "@/components/sops/sop-editor";
@@ -39,6 +38,8 @@ import { SOPResponsibilities } from "@/components/sops/sop-responsibilities";
 import { SOPSafety } from "@/components/sops/sop-safety";
 import { SOPResources } from "@/components/sops/sop-resources";
 import { SOPAcknowledgementBanner } from "@/components/sops/sop-acknowledgement";
+import { SOPInstancesList } from "@/components/sops/sop-instances-list";
+import { InviteStaffDialog } from "@/components/sops/invite-staff-dialog";
 
 interface SOPData {
   id: string;
@@ -82,6 +83,7 @@ export function SOPDetailClient({ id }: { id: string }) {
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState<"html" | "pdf" | "docx" | null>(null);
   const [activeTab, setActiveTab] = useState("editor");
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const fetchSOP = useCallback(async () => {
     const res = await fetch(`/api/sops/${id}`);
@@ -184,7 +186,7 @@ export function SOPDetailClient({ id }: { id: string }) {
   if (!sop) return null;
 
   return (
-    <motion.div className="max-w-5xl mx-auto space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <div className="max-w-5xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-start gap-3">
         <Button variant="ghost" size="icon" className="mt-0.5 shrink-0" onClick={() => router.push("/sops")}>
@@ -206,6 +208,17 @@ export function SOPDetailClient({ id }: { id: string }) {
           {saving && <span className="text-xs text-muted-foreground animate-pulse">Saving...</span>}
           <Button variant="outline" size="sm" onClick={() => handleUpdate({ isFavorite: !sop.isFavorite })}>
             <Star className={`w-3.5 h-3.5 ${sop.isFavorite ? "fill-yellow-500 text-yellow-500" : ""}`} />
+          </Button>
+
+          {/* Invite Staff button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setInviteOpen(true)}
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline text-xs">Invite</span>
           </Button>
 
           {/* Export dropdown */}
@@ -327,6 +340,7 @@ export function SOPDetailClient({ id }: { id: string }) {
             <TabsTrigger value="assistant" className="text-xs gap-1.5"><MessageSquareMore className="w-3.5 h-3.5" /> AI Assistant</TabsTrigger>
             <TabsTrigger value="comments" className="text-xs gap-1.5"><Users className="w-3.5 h-3.5" /> Comments</TabsTrigger>
             <TabsTrigger value="activity" className="text-xs gap-1.5"><Activity className="w-3.5 h-3.5" /> Activity</TabsTrigger>
+            <TabsTrigger value="executions" className="text-xs gap-1.5"><Play className="w-3.5 h-3.5" /> Executions</TabsTrigger>
           </TabsList>
         </div>
 
@@ -407,7 +421,19 @@ export function SOPDetailClient({ id }: { id: string }) {
         <TabsContent value="activity" className="mt-4">
           <SOPActivityLog activities={sop.activities} />
         </TabsContent>
+
+        <TabsContent value="executions" className="mt-4">
+          <SOPInstancesList sopId={id} />
+        </TabsContent>
       </Tabs>
-    </motion.div>
+
+      {/* ── Invite Staff dialog ─────────────────────────────── */}
+      <InviteStaffDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        sopId={id}
+        sopTitle={sop.title}
+      />
+    </div>
   );
 }

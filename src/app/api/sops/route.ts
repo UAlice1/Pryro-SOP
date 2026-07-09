@@ -19,20 +19,25 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { searchParams } = new URL(req.url);
-  const search       = searchParams.get("search")       ?? "";
-  const status       = searchParams.get("status")       ?? "";
-  const departmentId = searchParams.get("departmentId") ?? "";
-  const categoryId   = searchParams.get("categoryId")   ?? "";
-  const tag          = searchParams.get("tag")          ?? "";
-  const archived     = searchParams.get("archived")     === "true";
-  const page         = parseInt(searchParams.get("page")  ?? "1");
-  const limit        = parseInt(searchParams.get("limit") ?? "20");
+  const role = (session.user as { role?: string }).role ?? "EMPLOYEE";
+  const orgId = (session.user as { organizationId?: string }).organizationId;
+  const canViewAll = Permission.canViewAllOrgSOPs(role);
 
-  const where: Record<string, unknown> = {
-    authorId: session.user.id,
-    isArchived: archived, // fixed: was always false
-  };
+  const { searchParams } = new URL(req.url);
+  const search              = searchParams.get("search")              ?? "";
+  const status              = searchParams.get("status")              ?? "";
+  const departmentId        = searchParams.get("departmentId")        ?? "";
+  const categoryId          = searchParams.get("categoryId")          ?? "";
+  const tag                 = searchParams.get("tag")                 ?? "";
+  const complianceFramework = searchParams.get("complianceFramework") ?? "";
+  const archived            = searchParams.get("archived")            === "true";
+  const page                = parseInt(searchParams.get("page")  ?? "1");
+  const limit               = parseInt(searchParams.get("limit") ?? "20");
+
+  // Managers+ see all org SOPs; employees see only their own
+  const where: Record<string, unknown> = canViewAll
+    ? { ...(orgId ? { organizationId: orgId } : {}), isArchived: archived }
+    : { authorId: session.user.id, isArchived: archived };
 
   if (search) {
     where.OR = [
@@ -41,10 +46,11 @@ export async function GET(req: NextRequest) {
       { processName: { contains: search, mode: "insensitive" } },
     ];
   }
-  if (status)       where.status       = status;
-  if (departmentId) where.departmentId = departmentId;
-  if (categoryId)   where.categoryId   = categoryId;
-  if (tag)          where.tags         = { some: { tag: { equals: tag, mode: "insensitive" } } };
+  if (status)              where.status              = status;
+  if (departmentId)        where.departmentId        = departmentId;
+  if (categoryId)          where.categoryId          = categoryId;
+  if (complianceFramework) where.complianceFramework = complianceFramework;
+  if (tag)                 where.tags                = { some: { tag: { equals: tag, mode: "insensitive" } } };
 
   const [sops, total] = await Promise.all([
     db.sOP.findMany({
@@ -54,9 +60,9 @@ export async function GET(req: NextRequest) {
       take: limit,
       include: {
         department: { select: { id: true, name: true } },
-        category: { select: { id: true, name: true, color: true } },
-        author: { select: { id: true, name: true, image: true } },
-        tags: { select: { tag: true } },
+        category:   { select: { id: true, name: true, color: true } },
+        author:     { select: { id: true, name: true, image: true } },
+        tags:       { select: { tag: true } },
         _count: { select: { comments: true, workflowSteps: true, checklistItems: true } },
       },
     }),

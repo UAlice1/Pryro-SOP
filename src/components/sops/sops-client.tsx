@@ -40,7 +40,12 @@ interface SOP {
 
 interface FilterOption { id: string; name: string; color?: string }
 
-const EMPTY_FILTERS = { status: "", departmentId: "", categoryId: "", tag: "" };
+const EMPTY_FILTERS = { status: "", departmentId: "", categoryId: "", tag: "", complianceFramework: "" };
+
+const COMPLIANCE_OPTIONS = [
+  "ISO 9001", "ISO 27001", "SOC 2", "HIPAA", "GDPR",
+  "OSHA", "FDA 21 CFR", "PCI DSS", "NIST", "SOX",
+];
 
 export function SOPsClient() {
   const searchParams = useSearchParams();
@@ -73,10 +78,11 @@ export function SOPsClient() {
     setLoading(true);
     const params = new URLSearchParams();
     if (debouncedSearch)       params.set("search",       debouncedSearch);
-    if (filters.status)        params.set("status",        filters.status);
-    if (filters.departmentId)  params.set("departmentId",  filters.departmentId);
-    if (filters.categoryId)    params.set("categoryId",    filters.categoryId);
-    if (filters.tag)           params.set("tag",           filters.tag);
+    if (filters.status)              params.set("status",              filters.status);
+    if (filters.departmentId)         params.set("departmentId",         filters.departmentId);
+    if (filters.categoryId)           params.set("categoryId",           filters.categoryId);
+    if (filters.tag)                  params.set("tag",                  filters.tag);
+    if (filters.complianceFramework)  params.set("complianceFramework",  filters.complianceFramework);
     if (filterParam === "archived") params.set("archived", "true");
 
     const res  = await fetch(`/api/sops?${params}`);
@@ -128,7 +134,7 @@ export function SOPsClient() {
           <p className="text-muted-foreground text-sm">{total} SOP{total !== 1 ? "s" : ""}</p>
         </div>
         <Button asChild>
-          <Link href="/sops/new"><Plus className="w-4 h-4 mr-2" />New SOP</Link>
+          <Link href="/dashboard"><Plus className="w-4 h-4 mr-2" />New SOP</Link>
         </Button>
       </div>
 
@@ -236,9 +242,31 @@ export function SOPsClient() {
                   </div>
                 )}
 
+                {/* Compliance Framework */}
+                <div className="flex items-center gap-1">
+                  <Select
+                    value={filters.complianceFramework}
+                    onValueChange={(v) => setFilter("complianceFramework", v === "__all__" ? "" : v)}
+                  >
+                    <SelectTrigger className="w-44 h-8 text-xs">
+                      <SelectValue placeholder="Compliance" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All Frameworks</SelectItem>
+                      {COMPLIANCE_OPTIONS.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {filters.complianceFramework && (
+                    <button onClick={() => clearFilter("complianceFramework")}>
+                      <X className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+                    </button>
+                  )}
+                </div>
+
                 {/* Tag filter — pill buttons */}
-                {allTags.length > 0 && (
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                {allTags.length > 0 && (                  <div className="flex items-center gap-1.5 flex-wrap">
                     <Tag className="w-3.5 h-3.5 text-muted-foreground" />
                     {allTags.slice(0, 12).map((t) => (
                       <button
@@ -285,6 +313,12 @@ export function SOPsClient() {
                       <button onClick={() => clearFilter("tag")}><X className="w-2.5 h-2.5" /></button>
                     </Badge>
                   )}
+                  {filters.complianceFramework && (
+                    <Badge variant="secondary" className="text-xs gap-1 h-5">
+                      {filters.complianceFramework}
+                      <button onClick={() => clearFilter("complianceFramework")}><X className="w-2.5 h-2.5" /></button>
+                    </Badge>
+                  )}
                 </div>
               )}
             </motion.div>
@@ -308,7 +342,7 @@ export function SOPsClient() {
           </p>
           {activeFilterCount > 0
             ? <Button size="sm" variant="outline" onClick={clearAll}><X className="w-4 h-4 mr-1.5" />Clear filters</Button>
-            : <Button asChild size="sm"><Link href="/sops/new"><Plus className="w-4 h-4 mr-1.5" />New SOP</Link></Button>}
+            : <Button asChild size="sm"><Link href="/dashboard"><Plus className="w-4 h-4 mr-1.5" />New SOP</Link></Button>}
         </div>
       ) : (
         <AnimatePresence mode="popLayout">

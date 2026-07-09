@@ -15,7 +15,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
-  const sop = await db.sOP.findFirst({ where: { id, authorId: session.user.id } });
+  const userRole = (session.user as { role?: string })?.role ?? "EMPLOYEE";
+  const canEdit = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN" || userRole === "MANAGER";
+
+  // Allow the SOP author OR any editor-role user to update tags
+  const sop = await db.sOP.findFirst({
+    where: {
+      id,
+      ...(canEdit ? {} : { authorId: session.user.id }),
+    },
+  });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { tags } = await req.json() as { tags: string[] };

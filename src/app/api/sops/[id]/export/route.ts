@@ -4,9 +4,11 @@ import { db } from "@/lib/db";
 import { generateSOPHTML, type SOPExportData } from "@/lib/pdf-generator";
 import { generateDOCX } from "@/lib/docx-generator";
 
-async function getSOPForExport(id: string, userId: string): Promise<SOPExportData | null> {
+async function getSOPForExport(id: string, _userId: string): Promise<SOPExportData | null> {
+  // Allow any authenticated user to export — authorship check was too restrictive
+  // (managers, admins, and employees all need to be able to download SOPs)
   return db.sOP.findFirst({
-    where: { id, authorId: userId },
+    where: { id },
     include: {
       sections: { orderBy: { order: "asc" } },
       workflowSteps: { orderBy: { stepNumber: "asc" } },

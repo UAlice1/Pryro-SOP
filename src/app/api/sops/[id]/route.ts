@@ -9,8 +9,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params;
 
+  // Any authenticated user can read a SOP — authorship check was too restrictive
+  // (employees need to read/acknowledge SOPs they didn't author)
   const sop = await db.sOP.findFirst({
-    where: { id, authorId: session.user.id },
+    where: { id },
     include: {
       sections: { orderBy: { order: "asc" } },
       workflowSteps: { orderBy: { stepNumber: "asc" } },
@@ -59,7 +61,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const body = await req.json();
 
-  const sop = await db.sOP.findFirst({ where: { id, authorId: session.user.id } });
+  const userRole = (session.user as { role?: string }).role ?? "EMPLOYEE";
+  const canEdit = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN" || userRole === "MANAGER";
+
+  // Authors can always edit their own SOPs; editors (MANAGER+) can edit any SOP
+  const sop = await db.sOP.findFirst({
+    where: { id, ...(canEdit ? {} : { authorId: session.user.id }) },
+  });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const allowed = ["title", "description", "purpose", "scope", "processName", "status",
@@ -89,7 +97,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const { id } = await params;
 
-  const sop = await db.sOP.findFirst({ where: { id, authorId: session.user.id } });
+  // DELETE is already role-gated above; allow any permitted role to delete any SOP
+  const sop = await db.sOP.findFirst({ where: { id } });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await db.sOP.delete({ where: { id } });

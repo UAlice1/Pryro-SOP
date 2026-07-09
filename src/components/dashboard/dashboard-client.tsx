@@ -13,6 +13,7 @@ import {
   TrendingUp, Activity, ArrowRight,
 } from "lucide-react";
 import { STATUS_LABELS, STATUS_COLORS, timeAgo } from "@/lib/utils";
+import { AIGenerateDialog } from "@/components/sops/ai-generate-dialog";
 
 interface Stats {
   total: number;
@@ -28,6 +29,7 @@ interface Stats {
 export function DashboardClient({ userName }: { userName: string }) {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/dashboard/stats")
@@ -53,8 +55,8 @@ export function DashboardClient({ userName }: { userName: string }) {
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">Here&apos;s what&apos;s happening with your SOPs.</p>
         </div>
-        <Button asChild>
-          <Link href="/sops/new"><Plus className="w-4 h-4 mr-2" /> New SOP</Link>
+        <Button onClick={() => setAiDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" /> New SOP
         </Button>
       </div>
 
@@ -91,8 +93,8 @@ export function DashboardClient({ userName }: { userName: string }) {
             <p className="font-medium text-sm">Generate an SOP with AI</p>
             <p className="text-xs text-muted-foreground">Describe your process and let AI create a complete professional SOP in seconds.</p>
           </div>
-          <Button asChild size="sm">
-            <Link href="/sops/new?mode=ai">Generate Now <ArrowRight className="w-3.5 h-3.5 ml-1.5" /></Link>
+          <Button size="sm" onClick={() => setAiDialogOpen(true)}>
+            Generate Now <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
           </Button>
         </CardContent>
       </Card>
@@ -113,7 +115,7 @@ export function DashboardClient({ userName }: { userName: string }) {
                   {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
               ) : stats?.recent.length === 0 ? (
-                <EmptyState />
+                <EmptyState onGenerateClick={() => setAiDialogOpen(true)} />
               ) : (
                 <div className="divide-y divide-border">
                   {stats?.recent.map((sop) => (
@@ -218,19 +220,23 @@ export function DashboardClient({ userName }: { userName: string }) {
           </CardContent>
         </Card>
       )}
+
+      <AIGenerateDialog open={aiDialogOpen} onOpenChange={setAiDialogOpen} />
     </div>
   );
 }
 
-function EmptyState() {
+function EmptyState({ onGenerateClick }: { onGenerateClick: () => void }) {
   return (
     <div className="flex flex-col items-center gap-3 py-10 px-4">
       <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
         <FileText className="w-6 h-6 text-muted-foreground" />
       </div>
       <p className="text-sm font-medium">No SOPs yet</p>
-      <p className="text-xs text-muted-foreground text-center">Create your first SOP manually or generate one with AI.</p>
-      <Button size="sm" asChild><Link href="/sops/new"><Plus className="w-4 h-4 mr-1.5" /> Create SOP</Link></Button>
+      <p className="text-xs text-muted-foreground text-center">Create your first SOP or generate one with AI.</p>
+      <Button size="sm" onClick={onGenerateClick}>
+        <Plus className="w-4 h-4 mr-1.5" /> Create SOP
+      </Button>
     </div>
   );
 }

@@ -28,6 +28,8 @@ model User {
   activities    Activity[]
   acknowledgements Acknowledgement[]
   aiSettings    AISettings?
+  launchedInstances SOPInstance[]
+  completedTasks    ChecklistTaskExecution[]
 
   @@map("users")
 }
@@ -155,6 +157,10 @@ model SOP {
   aiGenerations    AIGeneration[]
   exportHistory    ExportHistory[]
   tags             SOPTag[]
+  industry            String?
+  complianceFramework String?
+  documentation       SOPDocumentation?
+  instances           SOPInstance[]
 
   @@map("sops")
 }
@@ -185,6 +191,10 @@ model WorkflowStep {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  phase       String?
+  action      String?
+  dependsOn   Int[]
+
   sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
 
   @@map("workflow_steps")
@@ -199,6 +209,12 @@ model ChecklistItem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  task         String?
+  assignedRole String?
+  priority     String?
+  isCompleted  Boolean  @default(false)
+  executions   ChecklistTaskExecution[]
+
   sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
 
   @@map("checklist_items")
@@ -211,6 +227,9 @@ model Responsibility {
   description String
   order       Int
   createdAt   DateTime @default(now())
+
+  roleName        String?
+  coreDutySummary String?
 
   sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
 
@@ -384,4 +403,50 @@ enum ApprovalStatus {
   APPROVED
   REJECTED
   CHANGES_REQUESTED
+}
+
+model SOPDocumentation {
+  id                        String   @id @default(cuid())
+  sopId                     String   @unique
+  objective                 String?
+  scope                     String?
+  detailedProcedureMarkdown String?
+  safetyOrComplianceNotes   String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+
+  @@map("sop_documentations")
+}
+
+model SOPInstance {
+  id           String                   @id @default(cuid())
+  sopId        String
+  name         String
+  status       String                   @default("ACTIVE") // ACTIVE | COMPLETED
+  launchedById String
+  launchedAt   DateTime                 @default(now())
+  completedAt  DateTime?
+
+  sop            SOP                      @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  launchedBy     User                     @relation(fields: [launchedById], references: [id])
+  taskExecutions ChecklistTaskExecution[]
+
+  @@map("sop_instances")
+}
+
+model ChecklistTaskExecution {
+  id              String    @id @default(cuid())
+  instanceId      String
+  checklistId     String
+  isCompleted     Boolean   @default(false)
+  completedById   String?
+  completedAt     DateTime?
+
+  instance      SOPInstance   @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  checklistItem ChecklistItem @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  completedBy   User?         @relation(fields: [completedById], references: [id])
+
+  @@map("checklist_task_executions")
 }

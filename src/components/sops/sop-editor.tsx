@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, Pencil, Eye } from "lucide-react";
 import { SOPTags } from "@/components/sops/sop-tags";
 import { STATUS_LABELS } from "@/lib/utils";
 
@@ -27,32 +30,95 @@ interface SOPEditorProps {
   onSaveSections: (sections: Section[]) => Promise<void>;
 }
 
+/* Sections that benefit from a markdown preview (long-form prose) */
+const MARKDOWN_SECTIONS = new Set(["procedures", "documentation", "notes", "safety", "quality", "review"]);
+
+function SectionEditor({
+  section,
+  onChange,
+}: {
+  section:  Section;
+  onChange: (content: string) => void;
+}) {
+  const useMarkdown = MARKDOWN_SECTIONS.has(section.type);
+
+  if (!useMarkdown) {
+    return (
+      <Textarea
+        value={section.content}
+        onChange={(e) => onChange(e.target.value)}
+        rows={4}
+        placeholder={`Write the ${section.title.toLowerCase()} section here…`}
+      />
+    );
+  }
+
+  return (
+    <Tabs defaultValue="write" className="w-full">
+      <TabsList className="h-7 mb-2">
+        <TabsTrigger value="write" className="h-6 text-xs gap-1.5">
+          <Pencil className="w-3 h-3" /> Write
+        </TabsTrigger>
+        <TabsTrigger value="preview" className="h-6 text-xs gap-1.5">
+          <Eye className="w-3 h-3" /> Preview
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="write" className="mt-0">
+        <Textarea
+          value={section.content}
+          onChange={(e) => onChange(e.target.value)}
+          rows={6}
+          placeholder={`Write ${section.title.toLowerCase()} in Markdown…`}
+          className="font-mono text-sm"
+        />
+        <p className="text-[10px] text-muted-foreground mt-1">
+          Supports Markdown: **bold**, *italic*, ## headings, - lists, `code`
+        </p>
+      </TabsContent>
+
+      <TabsContent value="preview" className="mt-0">
+        {section.content.trim() ? (
+          <article className="prose prose-sm dark:prose-invert max-w-none min-h-[150px] px-3 py-2 rounded-lg border border-border bg-muted/20">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {section.content}
+            </ReactMarkdown>
+          </article>
+        ) : (
+          <div className="min-h-[150px] flex items-center justify-center rounded-lg border border-dashed border-border text-muted-foreground text-xs">
+            Nothing to preview yet — write some content in the Write tab.
+          </div>
+        )}
+      </TabsContent>
+    </Tabs>
+  );
+}
+
 export function SOPEditor({ sop, onUpdate, onSaveSections }: SOPEditorProps) {
-  const [title, setTitle] = useState(sop.title);
+  const [title,       setTitle]       = useState(sop.title);
   const [description, setDescription] = useState(sop.description ?? "");
-  const [purpose, setPurpose] = useState(sop.purpose ?? "");
-  const [scope, setScope] = useState(sop.scope ?? "");
-  const [status, setStatus] = useState(sop.status);
+  const [status,      setStatus]      = useState(sop.status);
 
   const [sections, setSections] = useState<Section[]>(
     sop.sections.length > 0
       ? sop.sections
       : [
-          { type: "purpose", title: "Purpose", content: purpose, order: 1 },
-          { type: "scope", title: "Scope", content: scope, order: 2 },
-          { type: "procedures", title: "Procedures", content: "", order: 3 },
-          { type: "safety", title: "Safety & Compliance", content: "", order: 4 },
-          { type: "notes", title: "Notes", content: "", order: 5 },
-        ]
+          { type: "purpose",    title: "Purpose",             content: sop.purpose ?? "", order: 1 },
+          { type: "scope",      title: "Scope",               content: sop.scope   ?? "", order: 2 },
+          { type: "procedures", title: "Procedures",          content: "",               order: 3 },
+          { type: "safety",     title: "Safety & Compliance", content: "",               order: 4 },
+          { type: "notes",      title: "Notes",               content: "",               order: 5 },
+        ],
   );
 
   const handleSave = async () => {
-    await onUpdate({ title, description, purpose, scope, status });
+    await onUpdate({ title, description, status });
     await onSaveSections(sections);
   };
 
   return (
     <div className="space-y-4">
+      {/* Basic info */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Basic Information</CardTitle>
@@ -64,7 +130,12 @@ export function SOPEditor({ sop, onUpdate, onSaveSections }: SOPEditorProps) {
           </div>
           <div className="space-y-2">
             <Label>Description</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Brief overview..." />
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              placeholder="Brief overview of this process…"
+            />
           </div>
           <div className="space-y-2">
             <Label>Status</Label>
@@ -82,6 +153,7 @@ export function SOPEditor({ sop, onUpdate, onSaveSections }: SOPEditorProps) {
         </CardContent>
       </Card>
 
+      {/* Tags */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm">Tags</CardTitle>
@@ -91,21 +163,29 @@ export function SOPEditor({ sop, onUpdate, onSaveSections }: SOPEditorProps) {
         </CardContent>
       </Card>
 
+      {/* Sections — plain textarea for short fields, Write/Preview for prose */}
       {sections.map((section, i) => (
         <Card key={section.type + i}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">{section.title}</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2">
+              {section.title}
+              {MARKDOWN_SECTIONS.has(section.type) && (
+                <span className="text-[10px] text-muted-foreground font-normal border border-border rounded px-1.5 py-0.5">
+                  Markdown
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Textarea
-              value={section.content}
-              onChange={(e) => {
-                const updated = [...sections];
-                updated[i] = { ...updated[i], content: e.target.value };
-                setSections(updated);
+            <SectionEditor
+              section={section}
+              onChange={(content) => {
+                setSections((prev) => {
+                  const updated = [...prev];
+                  updated[i] = { ...updated[i], content };
+                  return updated;
+                });
               }}
-              rows={4}
-              placeholder={`Write the ${section.title.toLowerCase()} section here...`}
             />
           </CardContent>
         </Card>

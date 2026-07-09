@@ -3,6 +3,6 @@ import { auth } from "@/lib/auth";
 
 export default async function RootPage() {
   const session = await auth();
-  if (session?.user) redirect("/dashboard");
+  if (session?.user) redirect("/assistant");
   redirect("/login");
 }

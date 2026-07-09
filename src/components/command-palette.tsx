@@ -53,7 +53,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   const staticItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-    { label: "New SOP", icon: Plus, href: "/sops/new" },
+    { label: "New SOP", icon: Plus, href: "/dashboard" },
     { label: "Settings", icon: Settings, href: "/settings" },
   ];
 

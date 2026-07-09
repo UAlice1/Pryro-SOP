@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,13 +43,26 @@ export function RegisterForm() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
+        const err = await res.json() as { message?: string };
         toast.error(err.message ?? "Registration failed");
         return;
       }
 
-      toast.success("Account created! Please sign in.");
-      router.push("/login");
+      // Auto sign-in after successful registration → go straight to assistant
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        toast.success("Account created! Please sign in.");
+        router.push("/login");
+      } else {
+        toast.success("Welcome to Pryro SOP!");
+        router.push("/assistant");
+        router.refresh();
+      }
     } catch {
       toast.error("Something went wrong");
     } finally {

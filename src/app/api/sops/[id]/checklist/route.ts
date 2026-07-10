@@ -11,17 +11,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { items } = await req.json();
+
+  // Delete all existing items first (single query)
   await db.checklistItem.deleteMany({ where: { sopId: id } });
 
+  // Sequential inserts — safe with PrismaNeonHttp adapter
   if (items?.length) {
-    await db.checklistItem.createMany({
-      data: items.map((item: { text: string; isRequired: boolean; order: number }) => ({
-        sopId: id,
-        text: item.text,
-        isRequired: item.isRequired,
-        order: item.order,
-      })),
-    });
+    for (const item of items as { text: string; isRequired: boolean; order: number }[]) {
+      await db.checklistItem.create({
+        data: { sopId: id, text: item.text, isRequired: item.isRequired, order: item.order },
+      });
+    }
   }
 
   return NextResponse.json({ success: true });

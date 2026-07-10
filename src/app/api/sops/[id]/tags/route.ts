@@ -18,12 +18,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const userRole = (session.user as { role?: string })?.role ?? "EMPLOYEE";
   const canEdit = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN" || userRole === "MANAGER";
 
-  // Allow the SOP author OR any editor-role user to update tags
   const sop = await db.sOP.findFirst({
-    where: {
-      id,
-      ...(canEdit ? {} : { authorId: session.user.id }),
-    },
+    where: { id, ...(canEdit ? {} : { authorId: session.user.id }) },
   });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -31,10 +27,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const clean = [...new Set((tags ?? []).map((t: string) => t.trim().toLowerCase()).filter(Boolean))];
 
   await db.sOPTag.deleteMany({ where: { sopId: id } });
-  if (clean.length) {
-    await db.sOPTag.createMany({
-      data: clean.map((tag) => ({ sopId: id, tag })),
-    });
+
+  for (const tag of clean) {
+    await db.sOPTag.create({ data: { sopId: id, tag } });
   }
+
   return NextResponse.json({ tags: clean });
 }

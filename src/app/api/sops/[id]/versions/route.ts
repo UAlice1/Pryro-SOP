@@ -8,12 +8,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-
   const versions = await db.sOPVersion.findMany({
     where: { sopId: id },
     orderBy: { version: "desc" },
   });
-
   return NextResponse.json(versions);
 }
 
@@ -28,9 +26,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const sop = await db.sOP.findFirst({
     where: { id, authorId: session.user.id },
     include: {
-      sections:      { orderBy: { order: "asc" } },
-      workflowSteps: { orderBy: { stepNumber: "asc" } },
-      checklistItems:{ orderBy: { order: "asc" } },
+      sections:       { orderBy: { order: "asc" } },
+      workflowSteps:  { orderBy: { stepNumber: "asc" } },
+      checklistItems: { orderBy: { order: "asc" } },
     },
   });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -39,7 +37,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     where: { sopId: id },
     orderBy: { version: "desc" },
   });
-
   const newVersionNum = (latest?.version ?? 0) + 1;
 
   const snapshot = await db.sOPVersion.create({
@@ -50,13 +47,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       changes:   changes ?? `Version ${newVersionNum}`,
       createdBy: session.user.id,
       content: {
-        title:         sop.title,
-        description:   sop.description,
-        purpose:       sop.purpose,
-        scope:         sop.scope,
-        sections:      sop.sections,
-        workflowSteps: sop.workflowSteps,
-        checklistItems:sop.checklistItems,
+        title:          sop.title,
+        description:    sop.description,
+        purpose:        sop.purpose,
+        scope:          sop.scope,
+        sections:       sop.sections,
+        workflowSteps:  sop.workflowSteps,
+        checklistItems: sop.checklistItems,
       },
     },
   });
@@ -97,7 +94,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     checklistItems?: Array<{ text: string; isRequired: boolean; order: number }>;
   };
 
-  // Restore SOP fields
   await db.sOP.update({
     where: { id },
     data: {
@@ -108,33 +104,31 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     },
   });
 
-  // Restore sections
   if (snapshot.sections?.length) {
     await db.sOPSection.deleteMany({ where: { sopId: id } });
-    await db.sOPSection.createMany({
-      data: snapshot.sections.map((s) => ({ sopId: id, type: s.type, title: s.title, content: s.content, order: s.order })),
-    });
+    for (const s of snapshot.sections) {
+      await db.sOPSection.create({
+        data: { sopId: id, type: s.type, title: s.title, content: s.content, order: s.order },
+      });
+    }
   }
 
-  // Restore workflow
   if (snapshot.workflowSteps?.length) {
     await db.workflowStep.deleteMany({ where: { sopId: id } });
-    await db.workflowStep.createMany({
-      data: snapshot.workflowSteps.map((s) => ({
-        sopId: id, stepNumber: s.stepNumber, title: s.title,
-        description: s.description, role: s.role, duration: s.duration,
-      })),
-    });
+    for (const s of snapshot.workflowSteps) {
+      await db.workflowStep.create({
+        data: { sopId: id, stepNumber: s.stepNumber, title: s.title, description: s.description, role: s.role, duration: s.duration },
+      });
+    }
   }
 
-  // Restore checklist
   if (snapshot.checklistItems?.length) {
     await db.checklistItem.deleteMany({ where: { sopId: id } });
-    await db.checklistItem.createMany({
-      data: snapshot.checklistItems.map((c) => ({
-        sopId: id, text: c.text, isRequired: c.isRequired, order: c.order,
-      })),
-    });
+    for (const c of snapshot.checklistItems) {
+      await db.checklistItem.create({
+        data: { sopId: id, text: c.text, isRequired: c.isRequired, order: c.order },
+      });
+    }
   }
 
   await db.activity.create({

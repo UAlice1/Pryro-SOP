@@ -15,15 +15,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   await db.resource.deleteMany({ where: { sopId: id } });
 
   if (resources?.length) {
-    await db.resource.createMany({
-      data: resources.map((r: { name: string; type?: string; description?: string; order: number }) => ({
-        sopId: id,
-        name: r.name,
-        type: r.type,
-        description: r.description,
-        order: r.order,
-      })),
-    });
+    for (const r of resources as { name: string; type?: string; description?: string; order: number }[]) {
+      await db.resource.create({
+        data: { sopId: id, name: r.name, type: r.type, description: r.description, order: r.order },
+      });
+    }
   }
 
   await db.activity.create({

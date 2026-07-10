@@ -169,6 +169,71 @@ export async function generateDOCX(sop: SOPExportData): Promise<Buffer> {
 
   children.push(new Paragraph({ spacing: { before: 160 }, children: [] }));
 
+  // ── Documentation (AI-generated: objective, scope, procedure, safety) ──
+  if (sop.documentation) {
+    const d = sop.documentation;
+
+    if (d.objective) {
+      children.push(heading("Objective"));
+      children.push(bodyPara(d.objective));
+    }
+
+    if (d.scope) {
+      children.push(heading("Scope"));
+      children.push(bodyPara(d.scope));
+    }
+
+    if (d.safetyOrComplianceNotes) {
+      children.push(heading("Safety & Compliance"));
+      children.push(
+        new Paragraph({
+          spacing: { after: 120 },
+          shading: { type: ShadingType.SOLID, color: "fffbeb", fill: "fffbeb" },
+          border: {
+            top:    { style: BorderStyle.SINGLE, size: 4,  color: "fde68a" },
+            bottom: { style: BorderStyle.SINGLE, size: 4,  color: "fde68a" },
+            left:   { style: BorderStyle.THICK,  size: 16, color: "f59e0b" },
+            right:  { style: BorderStyle.SINGLE, size: 4,  color: "fde68a" },
+          },
+          indent: { left: 200, right: 200 },
+          children: [new TextRun({ text: d.safetyOrComplianceNotes, color: "92400e", size: 22 })],
+        })
+      );
+    }
+
+    if (d.detailedProcedureMarkdown) {
+      children.push(heading("Detailed Procedure"));
+      // Render each line as a paragraph
+      for (const line of d.detailedProcedureMarkdown.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        // Strip basic markdown
+        const text = trimmed
+          .replace(/^#{1,3}\s+/, "")
+          .replace(/\*\*(.+?)\*\*/g, "$1")
+          .replace(/\*(.+?)\*/g, "$1")
+          .replace(/^[-*] /, "• ")
+          .replace(/^\d+\. /, "");
+        const isBullet  = trimmed.startsWith("- ") || trimmed.startsWith("* ");
+        const isHeading = /^#{1,3} /.test(trimmed);
+        children.push(
+          new Paragraph({
+            spacing: { after: isHeading ? 80 : 40 },
+            indent: isBullet ? { left: 440 } : undefined,
+            children: [
+              new TextRun({
+                text,
+                size:  isHeading ? 24 : 22,
+                bold:  isHeading,
+                color: isHeading ? "1e293b" : "374151",
+              }),
+            ],
+          })
+        );
+      }
+    }
+  }
+
   // ── SOP Sections ──────────────────────────────────────────────
   for (const section of sop.sections) {
     const isSafety = section.type === "safety";
@@ -306,8 +371,8 @@ export async function generateDOCX(sop: SOPExportData): Promise<Buffer> {
             (r) =>
               new TableRow({
                 children: [
-                  cell(r.role, { bold: true, width: 35 }),
-                  cell(r.description, { width: 65 }),
+                  cell(r.roleName ?? r.role, { bold: true, width: 35 }),
+                  cell(r.coreDutySummary ?? r.description, { width: 65 }),
                 ],
               })
           ),

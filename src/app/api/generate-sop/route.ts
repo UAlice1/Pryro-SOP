@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
-/* ── Validation schema matching the generate_sop tool output ──────────── */
+/* ── Validation schema ────────────────────────────────────────────────── */
 
 const workflowStepSchema = z.object({
   stepNumber:  z.number(),
@@ -88,50 +88,59 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    /* 2 ── Workflow steps ───────────────────────────────────────────── */
+    /* 2 ── Workflow steps — sequential, HTTP adapter safe ──────────── */
     if (data.workflow?.length) {
-      await db.workflowStep.createMany({
-        data: data.workflow.map((s, i) => ({
-          sopId:       sop.id,
-          stepNumber:  s.stepNumber ?? i + 1,
-          title:       s.title,
-          description: s.description ?? null,
-          role:        s.role ?? null,
-          duration:    s.duration ?? null,
-          phase:       s.phase ?? null,
-          action:      s.action ?? null,
-          dependsOn:   s.dependsOn ?? [],
-        })),
-      });
+      for (let i = 0; i < data.workflow.length; i++) {
+        const s = data.workflow[i];
+        await db.workflowStep.create({
+          data: {
+            sopId:       sop.id,
+            stepNumber:  s.stepNumber ?? i + 1,
+            title:       s.title,
+            description: s.description ?? null,
+            role:        s.role ?? null,
+            duration:    s.duration ?? null,
+            phase:       s.phase ?? null,
+            action:      s.action ?? null,
+            dependsOn:   s.dependsOn ?? [],
+          },
+        });
+      }
     }
 
     /* 3 ── Checklist items ──────────────────────────────────────────── */
     if (data.checklist?.length) {
-      await db.checklistItem.createMany({
-        data: data.checklist.map((c, i) => ({
-          sopId:        sop.id,
-          text:         c.text,
-          task:         c.task ?? null,
-          assignedRole: c.assignedRole ?? null,
-          priority:     c.priority ?? null,
-          isRequired:   c.isRequired ?? false,
-          order:        i + 1,
-        })),
-      });
+      for (let i = 0; i < data.checklist.length; i++) {
+        const c = data.checklist[i];
+        await db.checklistItem.create({
+          data: {
+            sopId:        sop.id,
+            text:         c.text,
+            task:         c.task ?? null,
+            assignedRole: c.assignedRole ?? null,
+            priority:     c.priority ?? null,
+            isRequired:   c.isRequired ?? false,
+            order:        i + 1,
+          },
+        });
+      }
     }
 
     /* 4 ── Responsibilities ─────────────────────────────────────────── */
     if (data.responsibilities?.length) {
-      await db.responsibility.createMany({
-        data: data.responsibilities.map((r, i) => ({
-          sopId:           sop.id,
-          role:            r.role,
-          roleName:        r.roleName ?? null,
-          coreDutySummary: r.coreDutySummary ?? null,
-          description:     r.description ?? r.coreDutySummary ?? "",
-          order:           i + 1,
-        })),
-      });
+      for (let i = 0; i < data.responsibilities.length; i++) {
+        const r = data.responsibilities[i];
+        await db.responsibility.create({
+          data: {
+            sopId:           sop.id,
+            role:            r.role,
+            roleName:        r.roleName ?? null,
+            coreDutySummary: r.coreDutySummary ?? null,
+            description:     r.description ?? r.coreDutySummary ?? "",
+            order:           i + 1,
+          },
+        });
+      }
     }
 
     /* 5 ── Documentation ────────────────────────────────────────────── */

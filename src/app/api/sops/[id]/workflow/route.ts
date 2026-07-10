@@ -11,19 +11,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { steps } = await req.json();
+
   await db.workflowStep.deleteMany({ where: { sopId: id } });
 
   if (steps?.length) {
-    await db.workflowStep.createMany({
-      data: steps.map((s: { stepNumber: number; title: string; description?: string; role?: string; duration?: string }) => ({
-        sopId: id,
-        stepNumber: s.stepNumber,
-        title: s.title,
-        description: s.description,
-        role: s.role,
-        duration: s.duration,
-      })),
-    });
+    for (const s of steps as { stepNumber: number; title: string; description?: string; role?: string; duration?: string }[]) {
+      await db.workflowStep.create({
+        data: { sopId: id, stepNumber: s.stepNumber, title: s.title, description: s.description, role: s.role, duration: s.duration },
+      });
+    }
   }
 
   return NextResponse.json({ success: true });

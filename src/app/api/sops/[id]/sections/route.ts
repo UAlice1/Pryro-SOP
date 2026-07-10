@@ -15,15 +15,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   await db.sOPSection.deleteMany({ where: { sopId: id } });
 
   if (sections?.length) {
-    await db.sOPSection.createMany({
-      data: sections.map((s: { type: string; title: string; content: string; order: number }) => ({
-        sopId: id,
-        type: s.type,
-        title: s.title,
-        content: s.content,
-        order: s.order,
-      })),
-    });
+    for (const s of sections as { type: string; title: string; content: string; order: number }[]) {
+      await db.sOPSection.create({
+        data: { sopId: id, type: s.type, title: s.title, content: s.content, order: s.order },
+      });
+    }
   }
 
   return NextResponse.json({ success: true });

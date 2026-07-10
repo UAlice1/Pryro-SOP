@@ -161,6 +161,7 @@ model SOP {
   complianceFramework String?
   documentation       SOPDocumentation?
   instances           SOPInstance[]
+  assignments         SOPAssignment[]
 
   @@map("sops")
 }
@@ -231,7 +232,8 @@ model Responsibility {
   roleName        String?
   coreDutySummary String?
 
-  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  sop         SOP             @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  assignments SOPAssignment[]
 
   @@map("responsibilities")
 }
@@ -449,4 +451,21 @@ model ChecklistTaskExecution {
   completedBy   User?         @relation(fields: [completedById], references: [id])
 
   @@map("checklist_task_executions")
+}
+
+model SOPAssignment {
+  id             String          @id @default(uuid())
+  sopId          String
+  email          String
+  assignedRoleId String?
+  status         String          @default("PENDING") // PENDING, ACCEPTED, COMPLETED
+  magicToken     String          @unique @default(uuid())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  sop            SOP             @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  assignedRole   Responsibility? @relation(fields: [assignedRoleId], references: [id], onDelete: SetNull)
+
+  @@unique([sopId, email])
+  @@map("sop_assignments")
 }

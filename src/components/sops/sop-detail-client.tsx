@@ -21,7 +21,7 @@ import {
   FileText, CheckSquare, Users, BookOpen, Activity,
   GitMerge, History, Lightbulb, MessageSquareMore, Printer,
   FileDown, FileType, Globe, ChevronDown, Loader2,
-  ShieldCheck, Package, Play, UserPlus,
+  ShieldCheck, Package, Play, UserPlus, FileCode,
 } from "lucide-react";
 import { STATUS_LABELS, STATUS_COLORS, formatDateTime } from "@/lib/utils";
 import { SOPEditor } from "@/components/sops/sop-editor";
@@ -81,7 +81,7 @@ export function SOPDetailClient({ id }: { id: string }) {
   const [sop, setSop] = useState<SOPData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [exporting, setExporting] = useState<"html" | "pdf" | "docx" | null>(null);
+  const [exporting, setExporting] = useState<"html" | "pdf" | "docx" | "md" | null>(null);
   const [activeTab, setActiveTab] = useState("editor");
   const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -134,7 +134,7 @@ export function SOPDetailClient({ id }: { id: string }) {
     router.push("/sops");
   };
 
-  const handleExport = async (format: "html" | "pdf" | "docx") => {
+  const handleExport = async (format: "html" | "pdf" | "docx" | "md") => {
     if (exporting) return;
     setExporting(format);
     try {
@@ -248,6 +248,9 @@ export function SOPDetailClient({ id }: { id: string }) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExport("html")} disabled={!!exporting} className="gap-2 text-sm cursor-pointer">
                 <Globe className="w-3.5 h-3.5 text-green-500" />HTML
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("md")} disabled={!!exporting} className="gap-2 text-sm cursor-pointer">
+                <FileCode className="w-3.5 h-3.5 text-orange-500" />Markdown (.md)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

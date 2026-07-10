@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { generateSOPHTML, type SOPExportData } from "@/lib/pdf-generator";
 import { generateDOCX } from "@/lib/docx-generator";
+import { generateSOPMarkdown } from "@/lib/export/markdown-generator";
 
 async function getSOPForExport(id: string): Promise<SOPExportData | null> {
   return db.sOP.findFirst({
@@ -39,7 +40,7 @@ export async function GET(
 
   const { id } = await params;
   const { searchParams } = new URL(req.url);
-  const format = (searchParams.get("format") ?? "html") as "html" | "pdf" | "docx";
+  const format = (searchParams.get("format") ?? "html") as "html" | "pdf" | "docx" | "md";
 
   const sop = await getSOPForExport(id);
   if (!sop) {
@@ -123,5 +124,17 @@ export async function GET(
     }
   }
 
-  return NextResponse.json({ error: "Unsupported format. Use html, pdf, or docx." }, { status: 400 });
+  // ── Markdown ──────────────────────────────────────────────────
+  if (format === "md") {
+    const markdown = generateSOPMarkdown(sop);
+    return new NextResponse(markdown, {
+      headers: {
+        "Content-Type":        "text/markdown; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${safeTitle}.md"`,
+      },
+    });
+  }
+
+  return NextResponse.json({ error: "Unsupported format. Use html, pdf, docx, or md." }, { status: 400 });
 }
+

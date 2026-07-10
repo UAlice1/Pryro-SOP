@@ -34,33 +34,43 @@ export async function POST(req: NextRequest) {
 
   // Build the SOP context document
   const sections = sop.sections
-    .map((s) => `## ${s.title}\n${s.content}`)
+    .map((s: { title: string; content: string }) => `## ${s.title}\n${s.content}`)
     .join("\n\n");
 
   const workflow =
     sop.workflowSteps.length > 0
       ? "## Workflow Steps\n" +
         sop.workflowSteps
-          .map((s) => `${s.stepNumber}. **${s.title}**${s.role ? ` (${s.role})` : ""}${s.description ? ` — ${s.description}` : ""}`)
+          .map((s: { stepNumber: number; title: string; role: string | null; description: string | null }) =>
+            `${s.stepNumber}. **${s.title}**${s.role ? ` (${s.role})` : ""}${s.description ? ` — ${s.description}` : ""}`,
+          )
           .join("\n")
       : "";
 
   const checklist =
     sop.checklistItems.length > 0
       ? "## Checklist\n" +
-        sop.checklistItems.map((c) => `- ${c.text}${c.isRequired ? " [REQUIRED]" : ""}`).join("\n")
+        sop.checklistItems
+          .map((c: { text: string; isRequired: boolean }) => `- ${c.text}${c.isRequired ? " [REQUIRED]" : ""}`)
+          .join("\n")
       : "";
 
   const responsibilities =
     sop.responsibilities.length > 0
       ? "## Responsibilities\n" +
-        sop.responsibilities.map((r) => `- **${r.role}**: ${r.description}`).join("\n")
+        sop.responsibilities
+          .map((r: { role: string; description: string }) => `- **${r.role}**: ${r.description}`)
+          .join("\n")
       : "";
 
   const resources =
     sop.resources.length > 0
       ? "## Resources\n" +
-        sop.resources.map((r) => `- ${r.name} (${r.type ?? "General"}): ${r.description ?? ""}`).join("\n")
+        sop.resources
+          .map((r: { name: string; type: string | null; description: string | null }) =>
+            `- ${r.name} (${r.type ?? "General"}): ${r.description ?? ""}`,
+          )
+          .join("\n")
       : "";
 
   const sopContext = [
@@ -110,7 +120,7 @@ Answer:`;
 
     // Identify which sections were relevant (simple keyword match for citations)
     const sources = sop.sections
-      .filter((s) => {
+      .filter((s: { title: string; content: string }) => {
         const lower = lastQuestion.toLowerCase();
         return (
           s.title.toLowerCase().includes(lower) ||
@@ -118,7 +128,7 @@ Answer:`;
         );
       })
       .slice(0, 3)
-      .map((s) => ({ sopId, title: sop.title, section: s.title }));
+      .map((s: { title: string }) => ({ sopId, title: sop.title, section: s.title }));
 
     return NextResponse.json({ answer, sources });
   } catch (err: unknown) {

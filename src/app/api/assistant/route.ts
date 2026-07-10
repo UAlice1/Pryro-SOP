@@ -66,7 +66,8 @@ export async function POST(req: Request) {
       "to produce a structured, interactive SOP panel. " +
       "Be concise, professional, and action-oriented.",
     messages: await convertToModelMessages(messages),
-    tools: frontendTools(tools),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tools: frontendTools(tools) as any,
   });
 
   return result.toUIMessageStreamResponse();

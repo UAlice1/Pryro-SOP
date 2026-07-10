@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const content = sop.sections.map((s) => `${s.title}: ${s.content}`).join("\n");
+  const content = sop.sections.map((s: { title: string; content: string }) => `${s.title}: ${s.content}`).join("\n");
   const missingItems = [];
   if (!sop.workflowSteps.length) missingItems.push("workflow steps");
   if (!sop.checklistItems.length) missingItems.push("checklist");

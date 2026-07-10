@@ -22,9 +22,15 @@ export async function POST(req: NextRequest) {
 
   if (!sop) return NextResponse.json({ error: "SOP not found" }, { status: 404 });
 
-  const existingItems = sop.checklistItems.map((c) => `- ${c.text}`).join("\n");
-  const workflowContext = sop.workflowSteps.map((s) => `${s.stepNumber}. ${s.title}`).join("\n");
-  const sectionContent = sop.sections.map((s) => s.content).join("\n");
+  const existingItems = sop.checklistItems
+    .map((c: { text: string }) => `- ${c.text}`)
+    .join("\n");
+  const workflowContext = sop.workflowSteps
+    .map((s: { stepNumber: number; title: string }) => `${s.stepNumber}. ${s.title}`)
+    .join("\n");
+  const sectionContent = sop.sections
+    .map((s: { content: string }) => s.content)
+    .join("\n");
 
   const prompt = `You are an expert process analyst. Generate a comprehensive checklist for the following Standard Operating Procedure.
 

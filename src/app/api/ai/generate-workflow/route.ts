@@ -22,12 +22,18 @@ export async function POST(req: NextRequest) {
 
   if (!sop) return NextResponse.json({ error: "SOP not found" }, { status: 404 });
 
-  const existingSteps = sop.workflowSteps.map(
-    (s) => `${s.stepNumber}. ${s.title}${s.role ? ` (${s.role})` : ""}${s.duration ? ` [${s.duration}]` : ""}`
-  ).join("\n");
+  const existingSteps = sop.workflowSteps
+    .map((s: { stepNumber: number; title: string; role: string | null; duration: string | null }) =>
+      `${s.stepNumber}. ${s.title}${s.role ? ` (${s.role})` : ""}${s.duration ? ` [${s.duration}]` : ""}`,
+    )
+    .join("\n");
 
-  const sectionContent = sop.sections.map((s) => `${s.title}: ${s.content}`).join("\n");
-  const roles = sop.responsibilities.map((r) => r.role).join(", ");
+  const sectionContent = sop.sections
+    .map((s: { title: string; content: string }) => `${s.title}: ${s.content}`)
+    .join("\n");
+  const roles = sop.responsibilities
+    .map((r: { role: string }) => r.role)
+    .join(", ");
 
   const prompt = `You are an expert business process analyst. Generate a detailed workflow for this Standard Operating Procedure.
 

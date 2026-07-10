@@ -22,8 +22,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Cannot modify approved or published SOPs" }, { status: 403 });
   }
 
-  const workflowRoles = [...new Set(sop.workflowSteps.map((s) => s.role).filter(Boolean))].join(", ");
-  const content = sop.sections.map((s) => `${s.title}: ${s.content}`).join("\n");
+  const workflowRoles = [
+    ...new Set(
+      sop.workflowSteps
+        .map((s: { role: string | null }) => s.role)
+        .filter(Boolean),
+    ),
+  ].join(", ");
+  const content = sop.sections
+    .map((s: { title: string; content: string }) => `${s.title}: ${s.content}`)
+    .join("\n");
 
   const prompt = `You are an expert business analyst. Define clear roles and responsibilities for this Standard Operating Procedure.
 

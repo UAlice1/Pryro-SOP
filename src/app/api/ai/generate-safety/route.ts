@@ -19,7 +19,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Cannot modify approved or published SOPs" }, { status: 403 });
   }
 
-  const content = sop.sections.map((s) => `${s.title}: ${s.content}`).join("\n");
+  const content = sop.sections
+    .map((s: { title: string; content: string }) => `${s.title}: ${s.content}`)
+    .join("\n");
 
   const prompt = `You are a compliance and safety expert. Generate comprehensive safety and compliance requirements for this SOP.
 

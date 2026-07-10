@@ -27,7 +27,9 @@ export async function POST(req: NextRequest) {
   }
 
   const sopList = otherSOPs
-    .map((s) => `ID: ${s.id} | Title: ${s.title} | Process: ${s.processName ?? ""} | Description: ${(s.description ?? "").slice(0, 100)}`)
+    .map((s: { id: string; title: string; processName: string | null; description: string | null }) =>
+      `ID: ${s.id} | Title: ${s.title} | Process: ${s.processName ?? ""} | Description: ${(s.description ?? "").slice(0, 100)}`,
+    )
     .join("\n");
 
   const prompt = `You are an expert at identifying duplicate or overlapping business processes.

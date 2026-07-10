@@ -20,8 +20,14 @@ export async function POST(req: NextRequest) {
   });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const content = sop.sections.map((s) => `${s.title}:\n${s.content}`).join("\n\n");
-  const steps = sop.workflowSteps.map((s) => `${s.stepNumber}. ${s.title}: ${s.description ?? ""}`).join("\n");
+  const content = sop.sections
+    .map((s: { title: string; content: string }) => `${s.title}:\n${s.content}`)
+    .join("\n\n");
+  const steps = sop.workflowSteps
+    .map((s: { stepNumber: number; title: string; description: string | null }) =>
+      `${s.stepNumber}. ${s.title}: ${s.description ?? ""}`,
+    )
+    .join("\n");
 
   const prompt = `You are a plain-language business writing expert. Explain the following Standard Operating Procedure in simple, everyday language that any employee can understand — no jargon, no complex terms.
 

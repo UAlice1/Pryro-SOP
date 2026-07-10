@@ -22,8 +22,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Cannot modify approved or published SOPs" }, { status: 403 });
   }
 
-  const content = sop.sections.map((s) => `${s.title}: ${s.content}`).join("\n");
-  const steps = sop.workflowSteps.map((s) => s.title).join(", ");
+  const content = sop.sections
+    .map((s: { title: string; content: string }) => `${s.title}: ${s.content}`)
+    .join("\n");
+  const steps = sop.workflowSteps
+    .map((s: { title: string }) => s.title)
+    .join(", ");
 
   const prompt = `You are a business process expert. Identify all required resources, tools, and materials for this Standard Operating Procedure.
 

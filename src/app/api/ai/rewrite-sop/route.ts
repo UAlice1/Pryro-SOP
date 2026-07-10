@@ -32,8 +32,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Build context from existing SOP
-  const existingSections = sop.sections.map((s) => `${s.title}: ${s.content}`).join("\n\n");
-  const existingWorkflow = sop.workflowSteps.map((s) => `${s.stepNumber}. ${s.title}: ${s.description ?? ""}`).join("\n");
+  const existingSections = sop.sections
+    .map((s: { title: string; content: string }) => `${s.title}: ${s.content}`)
+    .join("\n\n");
+  const existingWorkflow = sop.workflowSteps
+    .map((s: { stepNumber: number; title: string; description: string | null }) =>
+      `${s.stepNumber}. ${s.title}: ${s.description ?? ""}`,
+    )
+    .join("\n");
 
   const prompt = `You are an expert business analyst. Rewrite the following Standard Operating Procedure to be more professional, comprehensive, and clear. 
 

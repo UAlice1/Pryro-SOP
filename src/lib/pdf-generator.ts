@@ -334,7 +334,7 @@ ${sop.resources.length > 0 ? `
 </html>`;
 }
 
-/* ─── renderMarkdown (used inline above) ─────────────────────────────────── */
+/* ─── Markdown helpers ───────────────────────────────────────────────────── */
 function renderMarkdown(md: string): string {
   const lines = md.split("\n");
   const html: string[] = [];

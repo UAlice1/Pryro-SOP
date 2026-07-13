@@ -34,7 +34,7 @@ interface SOP {
   department?: { id: string; name: string };
   category?: { id: string; name: string; color: string };
   author: { id: string; name: string; image?: string };
-  tags?: { tag: string }[];
+  tags?: { tag: { id: string; name: string } }[];
   _count: { comments: number; workflowSteps: number; checklistItems: number };
 }
 
@@ -68,9 +68,13 @@ export function SOPsClient() {
     Promise.all([
       fetch("/api/departments").then((r) => r.json()),
       fetch("/api/categories").then((r) => r.json()),
-    ]).then(([depts, cats]) => {
+      fetch("/api/tags").then((r) => r.json()),
+    ]).then(([depts, cats, tags]) => {
       setDepartments(Array.isArray(depts) ? depts : []);
       setCategories(Array.isArray(cats) ? cats : []);
+      setAllTags(
+        Array.isArray(tags) ? (tags as { id: string; name: string }[]).map((t) => t.name).sort() : []
+      );
     }).catch(() => {/* no org set up — silently ignore */});
   }, []);
 
@@ -94,14 +98,6 @@ export function SOPsClient() {
 
     setSops(items);
     setTotal(filterParam === "favorites" ? items.length : (data.total ?? 0));
-
-    // Collect tags for the tag filter pill list
-    const tags = new Set<string>();
-    items.forEach((s) => s.tags?.forEach((t) => tags.add(t.tag)));
-    setAllTags((prev) => {
-      const merged = new Set([...prev, ...tags]);
-      return Array.from(merged).sort();
-    });
 
     setLoading(false);
   }, [debouncedSearch, filters, filterParam]);
@@ -386,11 +382,11 @@ export function SOPsClient() {
                       <div className="flex items-center gap-1 mt-1 flex-wrap">
                         {sop.tags.slice(0, 4).map((t) => (
                           <button
-                            key={t.tag}
-                            onClick={() => setFilter("tag", t.tag)}
+                            key={t.tag.id}
+                            onClick={() => setFilter("tag", t.tag.name)}
                             className="text-[10px] px-1.5 py-0.5 rounded-full border border-border bg-muted hover:border-primary/50 transition-colors"
                           >
-                            #{t.tag}
+                            #{t.tag.name}
                           </button>
                         ))}
                         {sop.tags.length > 4 && (

@@ -74,9 +74,11 @@ export function SOPDetailClient({ id }: { id: string }) {
   const { data: session } = useSession();
   const currentUserId = (session?.user as { id?: string })?.id ?? "";
   const userRole      = (session?.user as { role?: string })?.role ?? "EMPLOYEE";
-  const canEdit       = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN" || userRole === "MANAGER";
-  const canDelete     = canEdit;
-  const canApprove    = canEdit; // MANAGER+
+  // EDITOR+ can edit content; MANAGER+ can create/delete/invite
+  const canEdit       = ["SUPER_ADMIN", "ORG_ADMIN", "MANAGER", "EDITOR"].includes(userRole);
+  const canDelete     = ["SUPER_ADMIN", "ORG_ADMIN", "MANAGER"].includes(userRole);
+  const canApprove    = ["SUPER_ADMIN", "ORG_ADMIN", "MANAGER", "APPROVER"].includes(userRole);
+  const canInvite     = ["SUPER_ADMIN", "ORG_ADMIN", "MANAGER"].includes(userRole);
 
   const [sop, setSop] = useState<SOPData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -211,6 +213,7 @@ export function SOPDetailClient({ id }: { id: string }) {
           </Button>
 
           {/* Invite Staff button */}
+          {canInvite && (
           <Button
             variant="outline"
             size="sm"
@@ -220,6 +223,7 @@ export function SOPDetailClient({ id }: { id: string }) {
             <UserPlus className="w-3.5 h-3.5" />
             <span className="hidden sm:inline text-xs">Invite</span>
           </Button>
+          )}
 
           {/* Export dropdown */}
           <DropdownMenu>

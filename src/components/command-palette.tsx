@@ -53,7 +53,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   const staticItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-    { label: "New SOP", icon: Plus, href: "/dashboard" },
+    { label: "New SOP", icon: Plus, href: "/sops/new" },
     { label: "Settings", icon: Settings, href: "/settings" },
   ];
 
@@ -94,7 +94,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1">Navigation</p>
             {staticItems.map((item) => (
               <button
-                key={item.href}
+                key={item.label}
                 onClick={() => navigate(item.href)}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-left text-sm"
               >

@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   BookOpen, CheckSquare, Users, FileText,
-  Save, Play, Loader2, ArrowRight,
+  Save, Loader2, ArrowRight,
   ShieldCheck, Clock, AlertTriangle, CheckCircle,
   FileDown, UserPlus, ChevronDown,
 } from "lucide-react";
@@ -89,8 +89,6 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
 
   const [published,  setPublished]  = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [launching,  setLaunching]  = useState(false);
-  const [instanceId, setInstanceId] = useState<string | null>(null);
   const [checked,    setChecked]    = useState<Record<number, boolean>>({});
   const [inviteOpen, setInviteOpen] = useState(false);
   const [downloading, setDownloading] = useState<"pdf" | "docx" | "html" | null>(null);
@@ -105,25 +103,16 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "PUBLISHED" }),
       });
-      if (res.ok) { setPublished(true); toast.success("SOP published"); }
-      else toast.error("Failed to publish");
-    } finally { setPublishing(false); }
-  }, [sopId]);
-
-  const handleLaunch = useCallback(async () => {
-    if (!sopId) return;
-    setLaunching(true);
-    try {
-      const res = await fetch("/api/sops/instances", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sopId }),
-      });
       if (res.ok) {
-        const inst = await res.json() as { id: string };
-        setInstanceId(inst.id);
-        toast.success("Execution instance launched");
-      } else toast.error("Failed to launch instance");
-    } finally { setLaunching(false); }
+        setPublished(true);
+        toast.success("SOP published successfully");
+      } else {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        toast.error(err.error ?? "Failed to publish");
+      }
+    } catch {
+      toast.error("Network error — could not publish");
+    } finally { setPublishing(false); }
   }, [sopId]);
 
   const handleDownload = useCallback(async (format: "pdf" | "docx" | "html") => {
@@ -509,34 +498,6 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
             </span>
           )}
 
-          {/* Launch execution button */}
-          {!instanceId ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleLaunch}
-              disabled={launching || !sopId}
-              className={cn(
-                "h-7 text-xs gap-1.5 rounded-lg",
-                "border-[#e3e3e3] dark:border-[#3c3c3c]",
-                "text-foreground hover:bg-[#ececec] dark:hover:bg-[#2f2f2f]",
-                "shadow-none",
-              )}
-            >
-              {launching
-                ? <Loader2 className="w-3 h-3 animate-spin" />
-                : <Play className="w-3 h-3" />}
-              {launching ? "Launching…" : "Launch"}
-            </Button>
-          ) : (
-            <span className={cn(
-              "inline-flex items-center gap-1 text-[10px] px-3 h-7 rounded-lg font-medium",
-              "bg-[#ececec] text-[#0d0d0d] dark:bg-[#3c3c3c] dark:text-[#ffffff]",
-            )}>
-              <CheckCircle className="w-3 h-3" /> Instance Active
-            </span>
-          )}
-
           {/* ── Invite staff button ─── */}
           <Button
             size="sm"
@@ -667,8 +628,8 @@ export const GenerateSOPTool = makeAssistantTool({
         body: JSON.stringify(args),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { error?: string };
-        return { sopId: null, error: err.error ?? "Failed to save SOP" };
+        const err = await res.json().catch(() => ({})) as { error?: string; detail?: string };
+        return { sopId: null, error: err.detail ?? err.error ?? "Failed to save SOP" };
       }
       const data = await res.json() as { sopId: string };
       return { sopId: data.sopId };

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import type { SOPStatus } from "@prisma/client";
 import { Permission } from "@/lib/permissions";
+
+type SOPStatus = "DRAFT" | "REVIEW" | "APPROVED" | "PUBLISHED" | "ARCHIVED";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const approvalId = `${id}-${session.user.id}`;
 
-    await db.approval.upsert({
+    const approval = await db.approval.upsert({
       where:  { id: approvalId },
       create: { id: approvalId, sopId: id, approverId: session.user.id, status: approvalStatusMap[action], comment },
       update: { status: approvalStatusMap[action], comment },
@@ -65,6 +66,49 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // Note: publishedAt is set separately on the publish action
 
     await db.sOP.update({ where: { id }, data: updateData });
+
+    // Auto-snapshot version on approval so the exact approved content is captured
+    if (action === "approve") {
+      const sopWithContent = await db.sOP.findFirst({
+        where: { id },
+        include: {
+          sections:       { orderBy: { order: "asc" } },
+          workflowSteps:  { orderBy: { stepNumber: "asc" } },
+          checklistItems: { orderBy: { order: "asc" } },
+        },
+      });
+
+      if (sopWithContent) {
+        const latest = await db.sOPVersion.findFirst({
+          where: { sopId: id },
+          orderBy: { version: "desc" },
+        });
+        const newVersionNum = (latest?.version ?? 0) + 1;
+
+        await db.sOPVersion.create({
+          data: {
+            sopId:     id,
+            version:   newVersionNum,
+            title:     sopWithContent.title,
+            changes:   `Approved by reviewer${comment ? `: ${comment}` : ""}`,
+            createdBy: session.user.id,
+            approvalId: approval.id,
+            content: {
+              title:          sopWithContent.title,
+              description:    sopWithContent.description,
+              purpose:        sopWithContent.purpose,
+              scope:          sopWithContent.scope,
+              sections:       sopWithContent.sections,
+              workflowSteps:  sopWithContent.workflowSteps,
+              checklistItems: sopWithContent.checklistItems,
+            },
+          },
+        });
+
+        await db.sOP.update({ where: { id }, data: { version: newVersionNum } });
+      }
+    }
+
     await db.activity.create({
       data: {
         sopId: id,

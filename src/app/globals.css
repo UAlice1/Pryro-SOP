@@ -240,3 +240,50 @@
     margin-top: 15mm;
   }
 }
+
+/* ── Assistant dark theme ─────────────────────────────────────────────────── */
+
+/* Thread area on dark background */
+.thread-dark-theme .aui-thread-root {
+  background-color: #212121;
+  color: #ececec;
+}
+.thread-dark-theme .aui-composer-input {
+  color: #ececec;
+}
+.thread-dark-theme .aui-composer-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+.thread-dark-theme .aui-thread-viewport-footer {
+  background: #212121;
+}
+
+/* Thread list on dark sidebar */
+.thread-list-dark [data-slot="aui_thread-list-group-label"] {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+}
+.thread-list-dark [data-slot="aui_thread-list-item"] {
+  border-radius: 0.5rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+.thread-list-dark [data-slot="aui_thread-list-item"]:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.thread-list-dark [data-slot="aui_thread-list-item"][data-active] {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+.thread-list-dark [data-slot="aui_thread-list-item-trigger"] {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.875rem;
+}
+.thread-list-dark [data-slot="aui_thread-list-item-more"] {
+  color: rgba(255, 255, 255, 0.4);
+}
+.thread-list-dark [data-slot="aui_thread-list-new"] {
+  color: rgba(255, 255, 255, 0.7);
+}
+.thread-list-dark [data-slot="aui_thread-list-new"]:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}

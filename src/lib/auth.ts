@@ -13,6 +13,7 @@ const loginSchema = z.object({
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
+  trustHost: true,
   pages: {
     signIn: "/login",
     error: "/login",
@@ -42,6 +43,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           image: user.image,
           role: user.role,
           organizationId: user.organizationId,
+          departmentId: user.departmentId,
         };
       },
     }),
@@ -49,17 +51,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.role = (user as any).role;
-        token.organizationId = (user as any).organizationId;
+        token.id             = user.id;
+        token.role           = (user as { role?: string }).role;
+        token.organizationId = (user as { organizationId?: string }).organizationId;
+        token.departmentId   = (user as { departmentId?: string }).departmentId;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
-        (session.user as any).role = token.role;
-        (session.user as any).organizationId = token.organizationId;
+        (session.user as { role?: string }).role                       = token.role as string;
+        (session.user as { organizationId?: string }).organizationId   = token.organizationId as string;
+        (session.user as { departmentId?: string }).departmentId       = token.departmentId as string;
       }
       return session;
     },

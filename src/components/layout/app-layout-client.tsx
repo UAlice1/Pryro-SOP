@@ -8,6 +8,9 @@ import type { ReactNode } from "react";
 /**
  * Wraps the entire app in AssistantRuntimeProvider so the AI thread list
  * sidebar and the generate_sop tool are available on every page.
+ *
+ * AssistantChatTransport extends DefaultChatTransport from the AI SDK and
+ * accepts an `api` option to override the default /api/chat endpoint.
  */
 export function AppLayoutClient({ children }: { children: ReactNode }) {
   const runtime = useChatRuntime({
@@ -16,7 +19,6 @@ export function AppLayoutClient({ children }: { children: ReactNode }) {
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      {/* Register the generate_sop tool globally — available in every chat thread */}
       <GenerateSOPTool />
       {children}
     </AssistantRuntimeProvider>

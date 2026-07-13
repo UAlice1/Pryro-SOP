@@ -106,8 +106,8 @@ const ToolFallbackImpl: ToolCallMessagePartComponent = ({ toolName, argsText, re
     <ToolFallbackRoot open={open} onOpenChange={setOpen}>
       <ToolFallbackTrigger toolName={toolName} status={status} />
       <ToolFallbackContent>
-        {status?.type === "incomplete" && status.error && (
-          <p className="text-muted-foreground text-xs">{typeof status.error === "string" ? status.error : JSON.stringify(status.error)}</p>
+        {status?.type === "incomplete" && status.error != null && (
+          <p className="text-muted-foreground text-xs">{typeof status.error === "string" ? status.error : JSON.stringify(status.error as Record<string, unknown>)}</p>
         )}
         {argsText && (
           <pre className={cn("bg-muted/50 text-foreground/90 rounded-md p-2.5 text-xs whitespace-pre-wrap", isCancelled && "opacity-60")}>{argsText}</pre>

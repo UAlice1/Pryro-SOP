@@ -5,9 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, FileText, Plus, Settings, Archive,
+  LayoutDashboard, FileText, Plus, Settings,
   ChevronLeft, ChevronRight, Sparkles, Building2, LogOut, User,
-  BotMessageSquare, Search, Menu, X, Star, PenSquare, ChevronDown,
+  BotMessageSquare, Search, Menu, X, PenSquare, ChevronDown,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,12 +28,9 @@ import type { User as NextAuthUser } from "next-auth";
 /* ─── Nav items ─────────────────────────────────────────────────────────── */
 
 const BASE_NAV = [
-  { href: "/assistant",             label: "Assistant",  icon: BotMessageSquare },
-  { href: "/dashboard",             label: "Dashboard",  icon: LayoutDashboard  },
-  { href: "/sops",                  label: "All SOPs",   icon: FileText         },
-  { href: "/sops?filter=favorites", label: "Favorites",  icon: Star             },
-  { href: "/sops?filter=archived",  label: "Archived",   icon: Archive          },
-  { href: "/settings",              label: "Settings",   icon: Settings         },
+  { href: "/assistant", label: "AI Assistant", icon: BotMessageSquare },
+  { href: "/sops",      label: "My SOPs",       icon: FileText         },
+  { href: "/settings",  label: "Settings",      icon: Settings         },
 ];
 
 function NavItem({

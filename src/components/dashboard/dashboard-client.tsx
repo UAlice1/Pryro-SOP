@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,236 +11,548 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   FileText, Plus, Sparkles, Clock, CheckCircle, AlertCircle,
-  TrendingUp, Activity, ArrowRight,
+  TrendingUp, Activity, ArrowRight, BookOpen, PenLine,
+  GitMerge, Eye, ShieldCheck, Users,
 } from "lucide-react";
 import { STATUS_LABELS, STATUS_COLORS, timeAgo } from "@/lib/utils";
 import { AIGenerateDialog } from "@/components/sops/ai-generate-dialog";
 
-interface Stats {
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface RecentSOP {
+  id: string;
+  title: string;
+  status: string;
+  isAIGenerated: boolean;
+  updatedAt: string;
+  version: number;
+  author: { id: string; name: string | null; image: string | null };
+  department?: { name: string };
+  category?: { name: string; color: string };
+}
+
+interface PendingSOP {
+  id: string;
+  title: string;
+  status: string;
+  updatedAt: string;
+  author: { id: string; name: string | null; image: string | null };
+  department?: { name: string };
+}
+
+interface ActivityItem {
+  id: string;
+  action: string;
+  description: string | null;
+  createdAt: string;
+  sop?: { id: string; title: string } | null;
+  user: { id: string; name: string | null; image: string | null };
+}
+
+interface DashboardStats {
   total: number;
   aiGenerated: number;
   drafts: number;
+  inReview: number;
+  approved: number;
   published: number;
-  pendingApprovals: number;
+  pendingApprovalCount: number;
   aiUsage: number;
-  recent: Array<{ id: string; title: string; status: string; isAIGenerated: boolean; updatedAt: string; department?: { name: string }; category?: { name: string; color: string } }>;
-  recentActivity: Array<{ id: string; action: string; description: string; createdAt: string; sop?: { id: string; title: string }; user: { id: string; name: string; image?: string } }>;
+  recent: RecentSOP[];
+  pendingApprovalSOPs: PendingSOP[];
+  recentActivity: ActivityItem[];
+  role: string;
+  canViewAll: boolean;
+  canApprove: boolean;
 }
 
+// ── Fetch helper ──────────────────────────────────────────────────────────────
+
+async function fetchDashboardStats(): Promise<DashboardStats> {
+  const res = await fetch("/api/dashboard/stats");
+  if (!res.ok) throw new Error("Failed to load dashboard");
+  return res.json();
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export function DashboardClient({ userName }: { userName: string }) {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/dashboard/stats")
-      .then((r) => r.json())
-      .then(setStats)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: stats, isLoading } = useQuery({
+    queryKey:    ["dashboard-stats"],
+    queryFn:     fetchDashboardStats,
+    staleTime:   30_000, // reuse cached data for 30 s
+    refetchOnWindowFocus: true,
+  });
 
+  const role      = stats?.role ?? "EMPLOYEE";
+  const canCreate = ["SUPER_ADMIN", "ORG_ADMIN", "MANAGER"].includes(role);
+  const canEdit   = ["SUPER_ADMIN", "ORG_ADMIN", "MANAGER", "EDITOR"].includes(role);
+  const canApprove = stats?.canApprove ?? false;
+
+  // ── Stat cards — role-aware ────────────────────────────────────────────────
   const statCards = [
-    { title: "Total SOPs", value: stats?.total ?? 0, icon: FileText, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-950/30" },
-    { title: "AI Generated", value: stats?.aiGenerated ?? 0, icon: Sparkles, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-950/30" },
-    { title: "Drafts", value: stats?.drafts ?? 0, icon: Clock, color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-950/30" },
-    { title: "Published", value: stats?.published ?? 0, icon: CheckCircle, color: "text-green-500", bg: "bg-green-50 dark:bg-green-950/30" },
+    {
+      title: "Total SOPs",
+      value: stats?.total ?? 0,
+      sub:   stats?.canViewAll ? "org-wide" : "your SOPs",
+      icon:  FileText,
+      color: "text-blue-500",
+      bg:    "bg-blue-50 dark:bg-blue-950/30",
+      href:  "/sops",
+    },
+    {
+      title: "Drafts",
+      value: stats?.drafts ?? 0,
+      sub:   "in progress",
+      icon:  Clock,
+      color: "text-yellow-500",
+      bg:    "bg-yellow-50 dark:bg-yellow-950/30",
+      href:  "/sops?status=DRAFT",
+    },
+    {
+      title: canApprove ? "Awaiting Approval" : "In Review",
+      value: canApprove ? (stats?.pendingApprovalCount ?? 0) : (stats?.inReview ?? 0),
+      sub:   canApprove ? "needs your review" : "under review",
+      icon:  canApprove ? AlertCircle : GitMerge,
+      color: canApprove && (stats?.pendingApprovalCount ?? 0) > 0 ? "text-orange-500" : "text-violet-500",
+      bg:    canApprove && (stats?.pendingApprovalCount ?? 0) > 0
+        ? "bg-orange-50 dark:bg-orange-950/30"
+        : "bg-violet-50 dark:bg-violet-950/30",
+      href:  "/sops?status=REVIEW",
+    },
+    {
+      title: "Published",
+      value: stats?.published ?? 0,
+      sub:   "live & accessible",
+      icon:  CheckCircle,
+      color: "text-green-500",
+      bg:    "bg-green-50 dark:bg-green-950/30",
+      href:  "/sops?status=PUBLISHED",
+    },
   ];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-6xl mx-auto p-6">
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Good {getGreeting()}, {userName.split(" ")[0]} 👋
           </h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Here&apos;s what&apos;s happening with your SOPs.</p>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Here&apos;s your SOP status
+            {stats?.canViewAll ? " across your organization." : "."}
+          </p>
         </div>
-        <Button onClick={() => setAiDialogOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" /> New SOP
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setAiDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" /> New SOP
+          </Button>
+        )}
       </div>
 
-      {/* Stats */}
+      {/* ── Pending approvals urgent banner ────────────────────────────────── */}
+      {canApprove && (stats?.pendingApprovalCount ?? 0) > 0 && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20">
+            <CardContent className="p-4 flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-orange-500 shrink-0" />
+              <p className="text-sm text-orange-800 dark:text-orange-300 flex-1">
+                <strong>{stats!.pendingApprovalCount}</strong> SOP{stats!.pendingApprovalCount > 1 ? "s are" : " is"} waiting for your approval.
+              </p>
+              <Button size="sm" variant="outline" className="border-orange-300 dark:border-orange-700 shrink-0" asChild>
+                <Link href="/sops?status=REVIEW">Review now <ArrowRight className="w-3 h-3 ml-1.5" /></Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* ── Stat cards ──────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card, i) => (
-          <motion.div key={card.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm text-muted-foreground">{card.title}</p>
-                  <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}>
-                    <card.icon className={`w-4 h-4 ${card.color}`} />
+          <motion.div
+            key={card.title}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06 }}
+          >
+            <Link href={card.href}>
+              <Card className="hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm text-muted-foreground">{card.title}</p>
+                    <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}>
+                      <card.icon className={`w-4 h-4 ${card.color}`} />
+                    </div>
                   </div>
-                </div>
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  <p className="text-3xl font-bold">{card.value}</p>
-                )}
-              </CardContent>
-            </Card>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-16" />
+                  ) : (
+                    <>
+                      <p className="text-3xl font-bold">{card.value}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{card.sub}</p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
           </motion.div>
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <Card className="border-dashed border-primary/30 bg-primary/5">
-        <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <Sparkles className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-sm">Generate an SOP with AI</p>
-            <p className="text-xs text-muted-foreground">Describe your process and let AI create a complete professional SOP in seconds.</p>
-          </div>
-          <Button size="sm" onClick={() => setAiDialogOpen(true)}>
-            Generate Now <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-          </Button>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent SOPs */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Recent SOPs</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/sops" className="text-xs text-muted-foreground hover:text-foreground">View all <ArrowRight className="w-3 h-3 ml-1" /></Link>
-              </Button>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loading ? (
-                <div className="px-4 pb-4 space-y-3">
-                  {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-                </div>
-              ) : stats?.recent.length === 0 ? (
-                <EmptyState onGenerateClick={() => setAiDialogOpen(true)} />
-              ) : (
-                <div className="divide-y divide-border">
-                  {stats?.recent.map((sop) => (
-                    <Link key={sop.id} href={`/sops/${sop.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
-                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        {sop.isAIGenerated ? <Sparkles className="w-4 h-4 text-purple-500" /> : <FileText className="w-4 h-4 text-muted-foreground" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{sop.title}</p>
-                        <p className="text-xs text-muted-foreground">{sop.department?.name ?? "No department"} · {timeAgo(sop.updatedAt)}</p>
-                      </div>
-                      <Badge className={`text-xs shrink-0 ${STATUS_COLORS[sop.status]}`}>
-                        {STATUS_LABELS[sop.status]}
-                      </Badge>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Activity */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="w-4 h-4" /> Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="px-4 pb-4 space-y-3">
-                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {stats?.recentActivity.slice(0, 8).map((act) => (
-                  <div key={act.id} className="flex items-start gap-3 px-4 py-3">
-                    <Avatar className="w-6 h-6 mt-0.5 shrink-0">
-                      <AvatarImage src={act.user.image ?? ""} />
-                      <AvatarFallback className="text-[10px]">{act.user.name?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs leading-snug">{act.description}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{timeAgo(act.createdAt)}</p>
-                    </div>
-                  </div>
-                ))}
-                {!stats?.recentActivity.length && (
-                  <p className="text-xs text-muted-foreground text-center py-6">No activity yet</p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* ── Quick actions ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {canCreate && (
+          <QuickAction
+            icon={<Sparkles className="w-4 h-4 text-purple-500" />}
+            bg="bg-purple-50 dark:bg-purple-950/30"
+            title="Generate with AI"
+            desc="Describe a process, get a full SOP"
+            onClick={() => setAiDialogOpen(true)}
+          />
+        )}
+        {canEdit && !canCreate && (
+          <QuickAction
+            icon={<PenLine className="w-4 h-4 text-blue-500" />}
+            bg="bg-blue-50 dark:bg-blue-950/30"
+            title="Edit SOPs"
+            desc="Update existing procedures"
+            href="/sops"
+          />
+        )}
+        {canCreate && (
+          <QuickAction
+            icon={<PenLine className="w-4 h-4 text-blue-500" />}
+            bg="bg-blue-50 dark:bg-blue-950/30"
+            title="Create Manually"
+            desc="Start from a blank template"
+            href="/sops/new"
+          />
+        )}
+        <QuickAction
+          icon={<BookOpen className="w-4 h-4 text-green-500" />}
+          bg="bg-green-50 dark:bg-green-950/30"
+          title="Browse Library"
+          desc="Search all SOPs in your org"
+          href="/sops"
+        />
+        {canApprove && (
+          <QuickAction
+            icon={<ShieldCheck className="w-4 h-4 text-orange-500" />}
+            bg="bg-orange-50 dark:bg-orange-950/30"
+            title="Review Queue"
+            desc="SOPs awaiting your approval"
+            href="/sops?status=REVIEW"
+          />
+        )}
       </div>
 
-      {/* Pending Approvals Banner */}
-      {stats && stats.pendingApprovals > 0 && (
-        <Card className="border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/20">
-          <CardContent className="p-4 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0" />
-            <p className="text-sm text-yellow-800 dark:text-yellow-400">
-              You have <strong>{stats.pendingApprovals}</strong> SOP{stats.pendingApprovals > 1 ? "s" : ""} pending your approval.
-            </p>
-            <Button variant="outline" size="sm" className="ml-auto border-yellow-300 dark:border-yellow-700" asChild>
-              <Link href="/sops?filter=pending">Review</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      {/* ── Main content grid ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-      {/* AI Usage */}
-      {stats && (
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-9 h-9 rounded-lg bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-purple-500" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">AI Usage Statistics</p>
-              <div className="flex items-center gap-4 mt-1">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600">{stats.aiUsage}</p>
-                  <p className="text-[10px] text-muted-foreground">Total Generations</p>
-                </div>
-                <div className="w-px h-8 bg-border" />
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{stats.aiGenerated}</p>
-                  <p className="text-[10px] text-muted-foreground">AI-Generated SOPs</p>
-                </div>
-                <div className="w-px h-8 bg-border" />
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">{stats.total > 0 ? Math.round((stats.aiGenerated / stats.total) * 100) : 0}%</p>
-                  <p className="text-[10px] text-muted-foreground">AI Adoption Rate</p>
-                </div>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/settings">Configure AI</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+        {/* Recent SOPs — 2/3 width */}
+        <div className="lg:col-span-2 space-y-6">
+          <RecentSOPsCard sops={stats?.recent ?? []} loading={isLoading} onGenerateClick={() => setAiDialogOpen(true)} canCreate={canCreate} />
+
+          {/* Pending approvals list — only for APPROVER+ */}
+          {canApprove && (
+            <PendingApprovalsCard sops={stats?.pendingApprovalSOPs ?? []} loading={isLoading} />
+          )}
+        </div>
+
+        {/* Right column — activity + AI stats */}
+        <div className="space-y-6">
+          <ActivityCard activity={stats?.recentActivity ?? []} loading={isLoading} canViewAll={stats?.canViewAll ?? false} />
+          <AIStatsCard
+            aiUsage={stats?.aiUsage ?? 0}
+            aiGenerated={stats?.aiGenerated ?? 0}
+            total={stats?.total ?? 0}
+            loading={isLoading}
+          />
+        </div>
+      </div>
 
       <AIGenerateDialog open={aiDialogOpen} onOpenChange={setAiDialogOpen} />
     </div>
   );
 }
 
-function EmptyState({ onGenerateClick }: { onGenerateClick: () => void }) {
-  return (
-    <div className="flex flex-col items-center gap-3 py-10 px-4">
-      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
-        <FileText className="w-6 h-6 text-muted-foreground" />
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function QuickAction({
+  icon, bg, title, desc, href, onClick,
+}: {
+  icon: React.ReactNode;
+  bg: string;
+  title: string;
+  desc: string;
+  href?: string;
+  onClick?: () => void;
+}) {
+  const inner = (
+    <div className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group">
+      <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
+        {icon}
       </div>
-      <p className="text-sm font-medium">No SOPs yet</p>
-      <p className="text-xs text-muted-foreground text-center">Create your first SOP or generate one with AI.</p>
-      <Button size="sm" onClick={onGenerateClick}>
-        <Plus className="w-4 h-4 mr-1.5" /> Create SOP
-      </Button>
+      <div className="min-w-0">
+        <p className="text-sm font-medium group-hover:text-primary transition-colors">{title}</p>
+        <p className="text-xs text-muted-foreground truncate">{desc}</p>
+      </div>
+      <ArrowRight className="w-3.5 h-3.5 text-muted-foreground ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+    </div>
+  );
+
+  if (onClick) return <button onClick={onClick} className="w-full text-left">{inner}</button>;
+  return <Link href={href!}>{inner}</Link>;
+}
+
+function RecentSOPsCard({
+  sops, loading, onGenerateClick, canCreate,
+}: {
+  sops: RecentSOP[];
+  loading: boolean;
+  onGenerateClick: () => void;
+  canCreate: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardTitle className="text-base flex items-center gap-2">
+          <FileText className="w-4 h-4" /> Recently Created
+        </CardTitle>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/sops" className="text-xs text-muted-foreground hover:text-foreground">
+            View all <ArrowRight className="w-3 h-3 ml-1" />
+          </Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="px-4 pb-4 space-y-3">
+            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+          </div>
+        ) : sops.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-10 px-4">
+            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+              <FileText className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-medium">No SOPs yet</p>
+            <p className="text-xs text-muted-foreground text-center">
+              {canCreate ? "Create your first SOP or generate one with AI." : "No SOPs have been created in your organization yet."}
+            </p>
+            {canCreate && (
+              <Button size="sm" onClick={onGenerateClick}>
+                <Plus className="w-4 h-4 mr-1.5" /> Create SOP
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {sops.map((sop) => (
+              <Link
+                key={sop.id}
+                href={`/sops/${sop.id}`}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  {sop.isAIGenerated
+                    ? <Sparkles className="w-4 h-4 text-purple-500" />
+                    : <FileText className="w-4 h-4 text-muted-foreground" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{sop.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {sop.author.name ?? "Unknown"}
+                    {sop.department ? ` · ${sop.department.name}` : ""}
+                    {" · "}v{sop.version}
+                    {" · "}{timeAgo(sop.updatedAt)}
+                  </p>
+                </div>
+                {sop.category && (
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 hidden sm:inline"
+                    style={{
+                      background: sop.category.color ? `${sop.category.color}20` : undefined,
+                      color:      sop.category.color ?? undefined,
+                      border:     `1px solid ${sop.category.color ?? "#e2e8f0"}40`,
+                    }}
+                  >
+                    {sop.category.name}
+                  </span>
+                )}
+                <Badge className={`text-xs shrink-0 ${STATUS_COLORS[sop.status]}`}>
+                  {STATUS_LABELS[sop.status]}
+                </Badge>
+              </Link>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function PendingApprovalsCard({ sops, loading }: { sops: PendingSOP[]; loading: boolean }) {
+  return (
+    <Card className="border-orange-100 dark:border-orange-900/50">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+        <CardTitle className="text-base flex items-center gap-2">
+          <GitMerge className="w-4 h-4 text-orange-500" />
+          Pending Approvals
+          {sops.length > 0 && (
+            <Badge className="text-[10px] bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-0 px-1.5">
+              {sops.length}
+            </Badge>
+          )}
+        </CardTitle>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/sops?status=REVIEW" className="text-xs text-muted-foreground hover:text-foreground">
+            View all <ArrowRight className="w-3 h-3 ml-1" />
+          </Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="px-4 pb-4 space-y-3">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+          </div>
+        ) : sops.length === 0 ? (
+          <div className="flex items-center gap-3 px-4 py-6 text-center justify-center">
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            <p className="text-sm text-muted-foreground">All caught up — no SOPs awaiting review.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {sops.map((sop) => (
+              <Link
+                key={sop.id}
+                href={`/sops/${sop.id}?tab=approval`}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+              >
+                <Avatar className="w-7 h-7 shrink-0">
+                  <AvatarImage src={sop.author.image ?? ""} />
+                  <AvatarFallback className="text-[10px]">{sop.author.name?.[0] ?? "?"}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{sop.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    by {sop.author.name ?? "Unknown"}
+                    {sop.department ? ` · ${sop.department.name}` : ""}
+                    {" · "}{timeAgo(sop.updatedAt)}
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" className="h-7 text-xs shrink-0">
+                  <Eye className="w-3 h-3 mr-1" /> Review
+                </Button>
+              </Link>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ActivityCard({
+  activity, loading, canViewAll,
+}: {
+  activity: ActivityItem[];
+  loading: boolean;
+  canViewAll: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Activity className="w-4 h-4" />
+          {canViewAll ? "Org Activity" : "My Activity"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="px-4 pb-4 space-y-3">
+            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+          </div>
+        ) : activity.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-6 px-4">No activity yet</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {activity.map((act) => (
+              <div key={act.id} className="flex items-start gap-3 px-4 py-3">
+                <Avatar className="w-6 h-6 mt-0.5 shrink-0">
+                  <AvatarImage src={act.user.image ?? ""} />
+                  <AvatarFallback className="text-[10px]">{act.user.name?.[0] ?? "?"}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  {act.sop ? (
+                    <Link href={`/sops/${act.sop.id}`} className="text-xs leading-snug hover:text-primary transition-colors line-clamp-2">
+                      {act.description ?? act.action}
+                    </Link>
+                  ) : (
+                    <p className="text-xs leading-snug line-clamp-2">{act.description ?? act.action}</p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{timeAgo(act.createdAt)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AIStatsCard({
+  aiUsage, aiGenerated, total, loading,
+}: {
+  aiUsage: number;
+  aiGenerated: number;
+  total: number;
+  loading: boolean;
+}) {
+  const adoptionPct = total > 0 ? Math.round((aiGenerated / total) * 100) : 0;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-purple-500" /> AI Usage
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <AIStatRow label="Generations" value={aiUsage} color="text-purple-600" />
+            <AIStatRow label="AI SOPs" value={aiGenerated} color="text-blue-600" />
+            <AIStatRow label="Adoption" value={`${adoptionPct}%`} color="text-green-600" />
+            <Button variant="outline" size="sm" className="w-full mt-1 text-xs" asChild>
+              <Link href="/settings/ai">Configure AI <ArrowRight className="w-3 h-3 ml-1.5" /></Link>
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AIStatRow({ label, value, color }: { label: string; value: number | string; color: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`text-sm font-semibold ${color}`}>{value}</p>
     </div>
   );
 }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getGreeting() {
   const h = new Date().getHours();

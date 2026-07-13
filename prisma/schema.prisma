@@ -86,6 +86,7 @@ model Organization {
   departments Department[]
   categories  Category[]
   sops        SOP[]
+  tags        Tag[]
 
   @@map("organizations")
 }
@@ -139,6 +140,7 @@ model SOP {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   publishedAt    DateTime?
+  deletedAt      DateTime?
 
   author           User          @relation("SOPAuthor", fields: [authorId], references: [id])
   organization     Organization? @relation(fields: [organizationId], references: [id])
@@ -252,14 +254,27 @@ model Resource {
   @@map("resources")
 }
 
+model Tag {
+  id             String   @id @default(cuid())
+  name           String
+  organizationId String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sops         SOPTag[]
+
+  @@unique([organizationId, name])
+  @@map("tags")
+}
+
 model SOPTag {
-  id    String @id @default(cuid())
   sopId String
-  tag   String
+  tagId String
 
   sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  tag Tag @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
-  @@unique([sopId, tag])
+  @@id([sopId, tagId])
   @@map("sop_tags")
 }
 
@@ -272,8 +287,10 @@ model SOPVersion {
   changes   String?
   createdBy String
   createdAt DateTime @default(now())
+  approvalId String?
 
-  sop SOP @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  sop      SOP      @relation(fields: [sopId], references: [id], onDelete: Cascade)
+  approval Approval? @relation(fields: [approvalId], references: [id], onDelete: SetNull)
 
   @@map("sop_versions")
 }
@@ -306,6 +323,7 @@ model Approval {
 
   sop      SOP  @relation(fields: [sopId], references: [id], onDelete: Cascade)
   approver User @relation(fields: [approverId], references: [id])
+  versions SOPVersion[]
 
   @@map("approvals")
 }
@@ -389,6 +407,8 @@ enum UserRole {
   SUPER_ADMIN
   ORG_ADMIN
   MANAGER
+  APPROVER
+  EDITOR
   EMPLOYEE
 }
 

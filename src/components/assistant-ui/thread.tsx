@@ -99,12 +99,14 @@ const ThreadRoot: FC<{ isEmpty: boolean }> = ({ isEmpty }) => {
   const { Welcome = ThreadWelcome } = useContext(ThreadComponentsContext);
   return (
     <ThreadPrimitive.Root
-      className="aui-root aui-thread-root bg-background @container flex h-full flex-col"
+      className="aui-root aui-thread-root @container flex h-full flex-col"
       style={{
         ["--thread-max-width" as string]: "48rem",
         ["--composer-bg" as string]: "var(--color-muted)",
         ["--composer-radius" as string]: "1.625rem",
         ["--composer-padding" as string]: "10px",
+        background: "var(--background)",
+        color: "var(--foreground)",
       }}
     >
       <ThreadPrimitive.Viewport
@@ -143,7 +145,7 @@ const ThreadRoot: FC<{ isEmpty: boolean }> = ({ isEmpty }) => {
               <ThreadSuggestions />
             </AuiIf>
             {/* Disclaimer */}
-            <p className="text-center text-[11px] text-muted-foreground/50 pb-1 hidden md:block">
+            <p className="text-center text-[11px] text-muted-foreground/60 pb-1 hidden md:block">
               AI can make mistakes. Verify important information.
             </p>
           </ThreadPrimitive.ViewportFooter>
@@ -172,7 +174,7 @@ const ThreadScrollToBottom: FC = () => (
     <TooltipIconButton
       tooltip="Scroll to bottom"
       variant="outline"
-      className="absolute -top-12 z-10 self-center rounded-full p-3 disabled:invisible shadow-md border-border/60 bg-background hover:bg-muted"
+      className="absolute -top-12 z-10 self-center rounded-full p-3 disabled:invisible shadow-md border-border bg-card hover:bg-muted text-foreground"
     >
       <ArrowDownIcon className="size-4" />
     </TooltipIconButton>
@@ -207,8 +209,8 @@ const WelcomeActionCard: FC<{
   };
 
   const inner = (
-    <div className="group flex flex-col gap-2 p-4 rounded-2xl border border-border bg-card hover:bg-muted/60 hover:border-border/80 transition-all cursor-pointer text-left w-full h-full">
-      <span className="text-muted-foreground group-hover:text-foreground/80 transition-colors">
+    <div className="group flex flex-col gap-2 p-4 rounded-2xl border border-border bg-card hover:bg-muted transition-all cursor-pointer text-left w-full h-full">
+      <span className="text-muted-foreground group-hover:text-foreground transition-colors">
         {icon}
       </span>
       <p className="text-sm font-medium text-foreground leading-snug">{title}</p>
@@ -224,12 +226,14 @@ const WelcomeActionCard: FC<{
 
 const ThreadWelcome: FC = () => (
   <div className="aui-thread-welcome-root mb-8 flex flex-col items-center px-2 text-center">
-    {/* Wordmark */}
+    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+      <Sparkles className="w-6 h-6 text-primary" />
+    </div>
     <h1 className="animate-in fade-in slide-in-from-bottom-1 fill-mode-both text-[1.75rem] font-semibold tracking-tight text-foreground duration-200 mb-1">
       How can I help you today?
     </h1>
     <p className="text-muted-foreground text-sm mb-8 max-w-sm">
-      Describe a process and I&apos;ll generate a complete SOP — or create one manually.
+      Describe any process or task and I&apos;ll generate a complete, professional SOP — ready to share with your team.
     </p>
 
     {/* 2×2 action cards */}
@@ -237,8 +241,8 @@ const ThreadWelcome: FC = () => (
       <WelcomeActionCard
         icon={<Sparkles className="w-5 h-5" />}
         title="Generate with AI"
-        description="Describe your process in plain English and AI builds the full SOP instantly."
-        prompt="I want to create an SOP for "
+        description="Describe your process in plain English and I'll build a complete SOP instantly."
+        prompt="I need an SOP for "
       />
       <WelcomeActionCard
         icon={<FileText className="w-5 h-5" />}
@@ -272,7 +276,7 @@ const ThreadSuggestions: FC = () => (
           <SuggestionPrimitive.Trigger send asChild>
             <Button
               variant="ghost"
-              className="text-foreground hover:bg-muted border-border/60 h-auto gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-normal whitespace-nowrap transition-colors"
+              className="text-muted-foreground hover:bg-muted hover:text-foreground border-border h-auto gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-normal whitespace-nowrap transition-colors"
             >
               <SuggestionPrimitive.Title />
               <SuggestionPrimitive.Description className="empty:hidden" />
@@ -296,21 +300,17 @@ const Composer: FC = () => (
       <div
         className={cn(
           "flex w-full flex-col gap-2 rounded-[var(--composer-radius)] p-[var(--composer-padding)]",
-          /* Light: #f4f4f4 solid fill. Dark: #2f2f2f solid fill. No colorful glow. */
-          "bg-[#f4f4f4] dark:bg-[#2f2f2f]",
-          "border border-[#e3e3e3] dark:border-[#3c3c3c]",
-          "shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)]",
-          "dark:shadow-[0_2px_12px_-4px_rgba(0,0,0,0.4)]",
+          "bg-muted border border-border",
+          "shadow-[0_2px_12px_-4px_rgba(0,0,0,0.1)]",
           "transition-[border-color] duration-150",
-          /* Focus: slightly darker border, still no color */
-          "focus-within:border-[#c8c8c8] dark:focus-within:border-[#555555]",
-          "data-[dragging=true]:border-dashed data-[dragging=true]:border-[#888888]",
+          "focus-within:border-input",
+          "data-[dragging=true]:border-dashed data-[dragging=true]:border-primary",
         )}
       >
         <ComposerAttachments />
         <ComposerPrimitive.Input
           placeholder="Message Pryro..."
-          className="aui-composer-input caret-foreground placeholder:text-[#676767] dark:placeholder:text-[#b4b4b4] max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-2 py-1.5 text-[15px] leading-relaxed outline-none text-foreground"
+          className="aui-composer-input caret-foreground placeholder:text-muted-foreground max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-2 py-1.5 text-[15px] leading-relaxed outline-none text-foreground"
           rows={1}
           autoFocus
           enterKeyHint="send"
@@ -340,7 +340,7 @@ const ComposerAction: FC = () => (
             type="button"
             variant="ghost"
             size="icon"
-            className="size-8 rounded-full text-muted-foreground hover:text-foreground"
+            className="size-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
             aria-label="Start voice input"
           >
             <MicIcon className="size-4" />
@@ -364,13 +364,13 @@ const ComposerAction: FC = () => (
         </ComposerPrimitive.StopDictation>
       </AuiIf>
 
-      {/* Send — dark filled circle with up-arrow, ChatGPT style */}
+      {/* Send — white circle with up-arrow, ChatGPT style */}
       <AuiIf condition={(s) => !s.thread.isRunning}>
         <ComposerPrimitive.Send asChild>
           <button
             type="button"
             aria-label="Send message"
-            className="flex items-center justify-center size-8 rounded-full bg-foreground text-background hover:opacity-80 disabled:opacity-30 transition-opacity"
+            className="flex items-center justify-center size-8 rounded-full bg-foreground text-background hover:opacity-90 disabled:opacity-30 transition-opacity"
           >
             <ArrowUpIcon className="size-4" />
           </button>
@@ -383,7 +383,7 @@ const ComposerAction: FC = () => (
           <button
             type="button"
             aria-label="Stop generating"
-            className="flex items-center justify-center size-8 rounded-full bg-foreground text-background hover:opacity-80 transition-opacity"
+            className="flex items-center justify-center size-8 rounded-full bg-foreground text-background hover:opacity-90 transition-opacity"
           >
             <SquareIcon className="size-3.5 fill-current" />
           </button>
@@ -397,7 +397,7 @@ const ComposerAction: FC = () => (
 
 const MessageError: FC = () => (
   <MessagePrimitive.Error>
-    <ErrorPrimitive.Root className="border-destructive bg-destructive/10 text-destructive dark:bg-destructive/5 mt-2 rounded-lg border p-3 text-sm dark:text-red-300">
+    <ErrorPrimitive.Root className="border-red-500/40 bg-red-500/10 text-red-400 mt-2 rounded-lg border p-3 text-sm">
       <ErrorPrimitive.Message className="line-clamp-3" />
     </ErrorPrimitive.Root>
   </MessagePrimitive.Error>
@@ -467,7 +467,7 @@ const AssistantMessage: FC = () => {
               case "indicator":
                 return (
                   <span
-                    className="inline-block w-2 h-4 rounded-sm bg-foreground/40 animate-pulse align-middle"
+                    className="inline-block w-2 h-4 rounded-sm bg-foreground/30 animate-pulse align-middle"
                     aria-label="Assistant is working"
                   />
                 );
@@ -521,10 +521,10 @@ const AssistantActionBar: FC = () => (
         side="bottom"
         align="start"
         sideOffset={6}
-        className="bg-popover/95 text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 z-50 min-w-[9rem] overflow-hidden rounded-xl border p-1.5 shadow-lg backdrop-blur-sm"
+        className="bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 z-50 min-w-[9rem] overflow-hidden rounded-xl border border-border p-1.5 shadow-lg"
       >
         <ActionBarPrimitive.ExportMarkdown asChild>
-          <ActionBarMorePrimitive.Item className="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none">
+          <ActionBarMorePrimitive.Item className="hover:bg-muted hover:text-foreground flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none">
             <DownloadIcon className="size-4" />
             Export as Markdown
           </ActionBarMorePrimitive.Item>
@@ -576,24 +576,22 @@ const EditComposer: FC = () => (
   <MessagePrimitive.Root className="flex flex-col items-end px-0">
     <ComposerPrimitive.Root
       className={cn(
-        "flex w-full max-w-[85%] flex-col rounded-[var(--composer-radius)]",
-        "bg-[#f4f4f4] dark:bg-[#2f2f2f]",
-        "border border-[#e3e3e3] dark:border-[#3c3c3c]",
-        "shadow-sm",
+        "flex w-full max-w-[85%] flex-col rounded-(--composer-radius)",
+        "bg-muted border border-border shadow-sm",
       )}
     >
       <ComposerPrimitive.Input
-        className="text-foreground min-h-14 w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[15px] outline-none"
+        className="text-foreground min-h-14 w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[15px] outline-none placeholder:text-muted-foreground"
         autoFocus
       />
       <div className="mx-3 mb-3 flex items-center gap-1.5 self-end">
         <ComposerPrimitive.Cancel asChild>
-          <Button variant="ghost" size="sm" className="h-8 rounded-full px-3.5 text-sm">
+          <Button variant="ghost" size="sm" className="h-8 rounded-full px-3.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted">
             Cancel
           </Button>
         </ComposerPrimitive.Cancel>
         <ComposerPrimitive.Send asChild>
-          <Button size="sm" className="h-8 rounded-full px-3.5 text-sm bg-foreground text-background hover:opacity-80">
+          <Button size="sm" className="h-8 rounded-full px-3.5 text-sm bg-foreground text-background hover:opacity-90">
             Update
           </Button>
         </ComposerPrimitive.Send>
@@ -607,14 +605,11 @@ const EditComposer: FC = () => (
 const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({ className, ...rest }) => (
   <BranchPickerPrimitive.Root
     hideWhenSingleBranch
-    className={cn(
-      "text-muted-foreground inline-flex items-center text-xs",
-      className,
-    )}
+    className={cn("text-muted-foreground inline-flex items-center text-xs", className)}
     {...rest}
   >
     <BranchPickerPrimitive.Previous asChild>
-      <TooltipIconButton tooltip="Previous" className="size-6 rounded hover:bg-muted">
+      <TooltipIconButton tooltip="Previous" className="size-6 rounded hover:bg-muted hover:text-foreground">
         <ChevronLeftIcon />
       </TooltipIconButton>
     </BranchPickerPrimitive.Previous>
@@ -622,7 +617,7 @@ const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({ className, ...rest
       <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
     </span>
     <BranchPickerPrimitive.Next asChild>
-      <TooltipIconButton tooltip="Next" className="size-6 rounded hover:bg-muted">
+      <TooltipIconButton tooltip="Next" className="size-6 rounded hover:bg-muted hover:text-foreground">
         <ChevronRightIcon />
       </TooltipIconButton>
     </BranchPickerPrimitive.Next>

@@ -9,7 +9,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
   const { archive } = await req.json(); // true = archive, false = unarchive
 
-  const sop = await db.sOP.findFirst({ where: { id, authorId: session.user.id } });
+  const sop = await db.sOP.findFirst({ where: { id, authorId: session.user.id, deletedAt: null } });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await db.sOP.update({

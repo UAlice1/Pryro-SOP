@@ -169,6 +169,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sopId: sop.id, title: sop.title }, { status: 201 });
   } catch (err) {
     console.error("[generate-sop] DB error:", err);
-    return NextResponse.json({ error: "Failed to save SOP" }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Failed to save SOP", detail: message }, { status: 500 });
   }
 }

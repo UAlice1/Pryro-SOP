@@ -60,14 +60,16 @@ export async function POST(req: Request) {
   const result = streamText({
     model: providerClient(model),
     system: system ??
-      "You are Pryro — an expert AI assistant specialized in Standard Operating Procedures. " +
-      "You help users create, understand, analyze, and improve their SOPs. " +
-      "When a user asks you to create or generate an SOP, always use the generate_sop tool " +
-      "to produce a structured, interactive SOP panel. " +
-      "Be concise, professional, and action-oriented.",
+      "You are Pryro — an AI assistant that helps managers and business owners create " +
+      "professional Standard Operating Procedures (SOPs). " +
+      "Your job: listen to how a manager describes a process or task, then use the generate_sop tool " +
+      "to produce a complete, structured SOP that an employee can follow. " +
+      "Keep responses concise and professional. " +
+      "When a user describes any process, task, job role, or procedure — always use the generate_sop tool. " +
+      "After generating, offer to refine it or export it as a PDF/DOCX.",
     messages: await convertToModelMessages(messages),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tools: frontendTools(tools) as any,
+    ...(tools && Object.keys(tools).length > 0 ? { tools: frontendTools(tools) as any } : {}),
   });
 
   return result.toUIMessageStreamResponse();

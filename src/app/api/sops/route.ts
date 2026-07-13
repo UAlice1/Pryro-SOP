@@ -35,9 +35,10 @@ export async function GET(req: NextRequest) {
   const limit               = parseInt(searchParams.get("limit") ?? "20");
 
   // Managers+ see all org SOPs; employees see only their own
+  // Never return soft-deleted SOPs
   const where: Record<string, unknown> = canViewAll
-    ? { ...(orgId ? { organizationId: orgId } : {}), isArchived: archived }
-    : { authorId: session.user.id, isArchived: archived };
+    ? { ...(orgId ? { organizationId: orgId } : {}), isArchived: archived, deletedAt: null }
+    : { authorId: session.user.id, isArchived: archived, deletedAt: null };
 
   if (search) {
     where.OR = [
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
   if (departmentId)        where.departmentId        = departmentId;
   if (categoryId)          where.categoryId          = categoryId;
   if (complianceFramework) where.complianceFramework = complianceFramework;
-  if (tag)                 where.tags                = { some: { tag: { equals: tag, mode: "insensitive" } } };
+  if (tag)                 where.tags                = { some: { tag: { name: { equals: tag, mode: "insensitive" } } } };
 
   const [sops, total] = await Promise.all([
     db.sOP.findMany({
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
         department: { select: { id: true, name: true } },
         category:   { select: { id: true, name: true, color: true } },
         author:     { select: { id: true, name: true, image: true } },
-        tags:       { select: { tag: true } },
+        tags:       { select: { tag: { select: { id: true, name: true } } } },
         _count: { select: { comments: true, workflowSteps: true, checklistItems: true } },
       },
     }),
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
   }
 
   const role = (session.user as { role?: string }).role ?? "EMPLOYEE";
-  if (!Permission.canEditSOPs(role)) {
+  if (!Permission.canCreateSOPs(role)) {
     return NextResponse.json({ error: "Insufficient permissions to create SOPs" }, { status: 403 });
   }
 

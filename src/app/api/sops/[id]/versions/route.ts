@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { changes } = (await req.json()) as { changes?: string };
 
   const sop = await db.sOP.findFirst({
-    where: { id, authorId: session.user.id },
+    where: { id, authorId: session.user.id, deletedAt: null },
     include: {
       sections:       { orderBy: { order: "asc" } },
       workflowSteps:  { orderBy: { stepNumber: "asc" } },
@@ -75,7 +75,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { versionId } = (await req.json()) as { versionId: string };
   if (!versionId) return NextResponse.json({ error: "versionId required" }, { status: 400 });
 
-  const sop = await db.sOP.findFirst({ where: { id, authorId: session.user.id } });
+  const sop = await db.sOP.findFirst({ where: { id, authorId: session.user.id, deletedAt: null } });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (sop.status === "APPROVED" || sop.status === "PUBLISHED") {
     return NextResponse.json({ error: "Cannot revert approved or published SOPs" }, { status: 403 });

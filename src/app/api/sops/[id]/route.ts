@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   // Any authenticated user can read a SOP — authorship check was too restrictive
   // (employees need to read/acknowledge SOPs they didn't author)
   const sop = await db.sOP.findFirst({
-    where: { id },
+    where: { id, deletedAt: null },
     include: {
       sections: { orderBy: { order: "asc" } },
       workflowSteps: { orderBy: { stepNumber: "asc" } },
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         orderBy: { updatedAt: "desc" },
         include: { approver: { select: { id: true, name: true, image: true } } },
       },
-      tags: true,
+      tags: { include: { tag: { select: { id: true, name: true } } } },
       activities: {
         orderBy: { createdAt: "desc" },
         take: 20,
@@ -62,11 +62,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const body = await req.json();
 
   const userRole = (session.user as { role?: string }).role ?? "EMPLOYEE";
-  const canEdit = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN" || userRole === "MANAGER";
+  const canEdit = Permission.canEditSOPs(userRole);
 
-  // Authors can always edit their own SOPs; editors (MANAGER+) can edit any SOP
+  // Authors can always edit their own SOPs; EDITOR+ can edit any SOP
   const sop = await db.sOP.findFirst({
-    where: { id, ...(canEdit ? {} : { authorId: session.user.id }) },
+    where: { id, deletedAt: null, ...(canEdit ? {} : { authorId: session.user.id }) },
   });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -97,10 +97,24 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const { id } = await params;
 
-  // DELETE is already role-gated above; allow any permitted role to delete any SOP
-  const sop = await db.sOP.findFirst({ where: { id } });
+  // DELETE is already role-gated above; allow any permitted role to soft-delete any SOP
+  const sop = await db.sOP.findFirst({ where: { id, deletedAt: null } });
   if (!sop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await db.sOP.delete({ where: { id } });
+  // Soft delete: set deletedAt instead of removing the record
+  await db.sOP.update({
+    where: { id },
+    data: { deletedAt: new Date(), status: "ARCHIVED", isArchived: true },
+  });
+
+  await db.activity.create({
+    data: {
+      sopId: id,
+      userId: session.user.id,
+      action: "deleted",
+      description: `Deleted SOP: ${sop.title}`,
+    },
+  });
+
   return NextResponse.json({ success: true });
 }

@@ -1,4 +1,6 @@
 import { handlers } from "@/lib/auth";
 
-export const GET = handlers.GET;
-export const POST = handlers.POST;
+// Force Node.js runtime — PrismaAdapter requires Node.js APIs (not Edge)
+export const runtime = "nodejs";
+
+export const { GET, POST } = handlers;

@@ -69,7 +69,7 @@ const parameters = z.object({
 });
 
 type SOPArgs   = z.infer<typeof parameters>;
-type SOPResult = { sopId: string | null; error?: string };
+type SOPResult = { sopId: string; error?: undefined } | { sopId: null; error: string };
 
 /* ─── Monochrome priority badge styles ───────────────────────────────────── */
 // No reds/yellows/blues — pure grayscale tiers

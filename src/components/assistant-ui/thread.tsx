@@ -226,9 +226,6 @@ const WelcomeActionCard: FC<{
 
 const ThreadWelcome: FC = () => (
   <div className="aui-thread-welcome-root mb-8 flex flex-col items-center px-2 text-center">
-    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-      <Sparkles className="w-6 h-6 text-primary" />
-    </div>
     <h1 className="animate-in fade-in slide-in-from-bottom-1 fill-mode-both text-[1.75rem] font-semibold tracking-tight text-foreground duration-200 mb-1">
       How can I help you today?
     </h1>
@@ -249,18 +246,6 @@ const ThreadWelcome: FC = () => (
         title="Create Manually"
         description="Start with a blank template and write your SOP step by step."
         href="/sops/new"
-      />
-      <WelcomeActionCard
-        icon={<span className="text-lg">📋</span>}
-        title="Draft an Employee Policy"
-        description="Generate an employee-facing policy document from a quick description."
-        prompt="Draft an employee policy for "
-      />
-      <WelcomeActionCard
-        icon={<span className="text-lg">✅</span>}
-        title="Check Compliance Status"
-        description="Review which SOPs need acknowledgement or are overdue for review."
-        prompt="Show me the compliance status for "
       />
     </div>
   </div>

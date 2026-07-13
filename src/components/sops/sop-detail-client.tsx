@@ -206,7 +206,7 @@ export function SOPDetailClient({ id }: { id: string }) {
             {sop.department && ` · ${sop.department.name}`}
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
           {saving && <span className="text-xs text-muted-foreground animate-pulse">Saving...</span>}
           <Button variant="outline" size="sm" onClick={() => handleUpdate({ isFavorite: !sop.isFavorite })}>
             <Star className={`w-3.5 h-3.5 ${sop.isFavorite ? "fill-yellow-500 text-yellow-500" : ""}`} />
@@ -330,25 +330,66 @@ export function SOPDetailClient({ id }: { id: string }) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="overflow-x-auto scrollbar-hide">
-          <TabsList className="h-9 w-max">
-            <TabsTrigger value="editor" className="text-xs gap-1.5"><FileText className="w-3.5 h-3.5" /> Editor</TabsTrigger>
-            <TabsTrigger value="workflow" className="text-xs gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Workflow</TabsTrigger>
-            <TabsTrigger value="checklist" className="text-xs gap-1.5"><CheckSquare className="w-3.5 h-3.5" /> Checklist</TabsTrigger>
-            <TabsTrigger value="responsibilities" className="text-xs gap-1.5"><Users className="w-3.5 h-3.5" /> Responsibilities</TabsTrigger>
-            <TabsTrigger value="safety" className="text-xs gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Safety</TabsTrigger>
-            <TabsTrigger value="resources" className="text-xs gap-1.5"><Package className="w-3.5 h-3.5" /> Resources</TabsTrigger>
-            <TabsTrigger value="approval" className="text-xs gap-1.5">
-              <GitMerge className="w-3.5 h-3.5" /> Approval
-              {sop.status === "REVIEW" && <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 ml-0.5" />}
-            </TabsTrigger>
-            <TabsTrigger value="versions" className="text-xs gap-1.5"><History className="w-3.5 h-3.5" /> Versions</TabsTrigger>
-            <TabsTrigger value="insights" className="text-xs gap-1.5"><Lightbulb className="w-3.5 h-3.5" /> Insights</TabsTrigger>
-            <TabsTrigger value="assistant" className="text-xs gap-1.5"><MessageSquareMore className="w-3.5 h-3.5" /> AI Assistant</TabsTrigger>
-            <TabsTrigger value="comments" className="text-xs gap-1.5"><Users className="w-3.5 h-3.5" /> Comments</TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs gap-1.5"><Activity className="w-3.5 h-3.5" /> Activity</TabsTrigger>
-            <TabsTrigger value="executions" className="text-xs gap-1.5"><Play className="w-3.5 h-3.5" /> Executions</TabsTrigger>
+        {/* 
+          Primary tabs (always visible) + overflow tabs in a dropdown.
+          This avoids the horizontal scroll issue entirely.
+        */}
+        <div className="flex items-center gap-1 border-b border-border pb-0">
+          <TabsList className="h-9 bg-transparent p-0 gap-0 flex-wrap">
+            {/* Always-visible primary tabs */}
+            {[
+              { value: "editor",           icon: FileText,         label: "Editor"          },
+              { value: "workflow",         icon: BookOpen,         label: "Workflow"        },
+              { value: "checklist",        icon: CheckSquare,      label: "Checklist"       },
+              { value: "responsibilities", icon: Users,            label: "Roles"           },
+              { value: "approval",         icon: GitMerge,         label: "Approval",       dot: sop.status === "REVIEW" },
+              { value: "assistant",        icon: MessageSquareMore,label: "AI Assistant"    },
+            ].map(({ value, icon: Icon, label, dot }) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="h-9 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs gap-1.5 px-3"
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{label}</span>
+                {dot && <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />}
+              </TabsTrigger>
+            ))}
           </TabsList>
+
+          {/* Secondary tabs in a dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-1 text-xs text-muted-foreground hover:text-foreground rounded-none border-b-2 border-transparent data-[state=open]:border-primary px-3"
+              >
+                More <ChevronDown className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-44">
+              {[
+                { value: "safety",     icon: ShieldCheck,       label: "Safety"      },
+                { value: "resources",  icon: Package,           label: "Resources"   },
+                { value: "versions",   icon: History,           label: "Versions"    },
+                { value: "insights",   icon: Lightbulb,         label: "Insights"    },
+                { value: "comments",   icon: Users,             label: "Comments"    },
+                { value: "activity",   icon: Activity,          label: "Activity"    },
+                { value: "executions", icon: Play,              label: "Executions"  },
+              ].map(({ value, icon: Icon, label }) => (
+                <DropdownMenuItem
+                  key={value}
+                  onClick={() => setActiveTab(value)}
+                  className={`gap-2 text-sm cursor-pointer ${activeTab === value ? "bg-accent" : ""}`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                  {activeTab === value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <TabsContent value="editor" className="mt-4">

@@ -10,7 +10,8 @@ import { Thread } from "@/components/assistant-ui/thread";
 ──────────────────────────────────────────────────────────────────────────── */
 export function AssistantPageClient() {
   return (
-    <div className="flex h-full w-full flex-col bg-background">
+    // Pull back the layout padding so the chat fills edge-to-edge
+    <div className="-mx-6 -my-6 flex h-[calc(100vh-0px)] w-[calc(100%+3rem)] flex-col bg-background">
       <Thread />
     </div>
   );

@@ -134,7 +134,7 @@ export function DashboardClient({ userName }: { userName: string }) {
   ];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto p-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">

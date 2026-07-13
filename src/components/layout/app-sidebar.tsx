@@ -5,9 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, FileText, Plus, Settings,
-  ChevronLeft, ChevronRight, Sparkles, Building2, LogOut, User,
-  BotMessageSquare, Search, Menu, X, PenSquare, ChevronDown,
+  LayoutDashboard, FileText, Settings,
+  ChevronLeft, ChevronRight, Building2, LogOut, User,
+  BotMessageSquare, Search, Menu, X, ChevronDown,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,11 +16,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ThreadListNew,
-  ThreadListItems,
-  ThreadListRoot,
-} from "@/components/assistant-ui/thread-list";
+
 import { CommandPalette } from "@/components/command-palette";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { User as NextAuthUser } from "next-auth";
@@ -92,23 +88,11 @@ export function AppSidebarContent({
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: "var(--sidebar)" }}>
 
-      {/* ── Top header: Logo + New Chat ─────────────────────── */}
-      <div className="flex items-center justify-between px-3 py-3 shrink-0">
-        {/* Brand mark */}
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#0d0d0d] dark:bg-[#ffffff] flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-[#ffffff] dark:text-[#0d0d0d]" />
-          </div>
-          <span className="font-semibold text-sm tracking-tight truncate text-[var(--sidebar-foreground)]">
-            Pryro SOP
-          </span>
-        </div>
-        {/* New chat icon button */}
-        <ThreadListRoot>
-          <ThreadListNew className="h-8 w-8 p-0 flex items-center justify-center rounded-lg hover:bg-[var(--sidebar-accent)] text-[var(--sidebar-foreground)]/70 hover:text-[var(--sidebar-foreground)]">
-            <PenSquare className="w-4 h-4" />
-          </ThreadListNew>
-        </ThreadListRoot>
+      {/* ── Top header: Logo ────────────────────────────────── */}
+      <div className="flex items-center px-3 py-3 shrink-0">
+        <span className="font-bold text-sm tracking-tight text-[var(--sidebar-foreground)]">
+          Pryro SOP
+        </span>
       </div>
 
       {/* ── Search bar ──────────────────────────────────────── */}
@@ -126,7 +110,7 @@ export function AppSidebarContent({
       </div>
 
       {/* ── App navigation ──────────────────────────────────── */}
-      <nav className="px-2 pb-1 space-y-0.5 shrink-0">
+      <nav className="px-2 pb-1 space-y-0.5 flex-1 shrink-0">
         {navItems.map((item) => (
           <NavItem
             key={item.href}
@@ -137,21 +121,6 @@ export function AppSidebarContent({
           />
         ))}
       </nav>
-
-      {/* ── Divider ─────────────────────────────────────────── */}
-      <div className="mx-3 my-2 border-t border-[var(--sidebar-border)] shrink-0" />
-
-      {/* ── AI Chat thread history ───────────────────────────── */}
-      <div className="flex flex-col flex-1 overflow-hidden px-2 pb-2 min-h-0">
-        <p className="text-[11px] font-medium text-[var(--sidebar-foreground)]/40 uppercase tracking-wider px-2 py-1 mb-1 shrink-0">
-          Chat History
-        </p>
-        <div className="flex-1 overflow-y-auto min-h-0 [&::-webkit-scrollbar]:w-0">
-          <ThreadListRoot>
-            <ThreadListItems />
-          </ThreadListRoot>
-        </div>
-      </div>
 
       {/* ── User footer — borderless, flat ───────────────────── */}
       <div className="px-2 py-2 shrink-0">
@@ -247,8 +216,8 @@ export function AppSidebar({ user }: { user: NextAuthUser }) {
         {collapsed ? (
           /* Collapsed strip — icons only */
           <div className="flex flex-col h-full items-center py-3 gap-1">
-            <div className="w-7 h-7 rounded-lg bg-[#0d0d0d] dark:bg-[#ffffff] flex items-center justify-center mb-3 shrink-0">
-              <Sparkles className="w-4 h-4 text-[#ffffff] dark:text-[#0d0d0d]" />
+            <div className="w-7 h-7 flex items-center justify-center mb-3 shrink-0">
+              <span className="text-[var(--sidebar-foreground)] font-bold text-xs">PS</span>
             </div>
             {/* Collapsed nav icons */}
             {BASE_NAV.map(({ href, label, icon: Icon }) => (
@@ -261,14 +230,6 @@ export function AppSidebar({ user }: { user: NextAuthUser }) {
                 <Icon className="w-4 h-4" />
               </Link>
             ))}
-            {/* Collapsed new chat */}
-            <div className="mt-auto mb-2">
-              <ThreadListRoot>
-                <ThreadListNew className="h-9 w-9 p-0 flex items-center justify-center rounded-lg hover:bg-[var(--sidebar-accent)] text-[var(--sidebar-foreground)]/60 hover:text-[var(--sidebar-foreground)]">
-                  <Plus className="w-4 h-4" />
-                </ThreadListNew>
-              </ThreadListRoot>
-            </div>
           </div>
         ) : (
           <AppSidebarContent user={user} />

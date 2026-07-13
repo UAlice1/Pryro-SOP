@@ -214,7 +214,7 @@ export function generateSOPHTML(sop: SOPExportData, forPDF = false): string {
 
 ${lastApproval ? `
 <div class="approval-banner">
-  <span>✅&nbsp; Approved by <strong>${esc(lastApproval.approver.name ?? "—")}</strong> on ${formatDate(lastApproval.updatedAt)}</span>
+  <span>Approved by <strong>${esc(lastApproval.approver.name ?? "—")}</strong> on ${formatDate(lastApproval.updatedAt)}</span>
 </div>` : ""}
 
 <!-- ══ DOCUMENTATION (AI-generated objective / scope / procedure) ══ -->
@@ -224,25 +224,25 @@ ${sop.documentation ? (() => {
 
   if (d.objective) {
     parts.push(`
-<div class="section-header"><div class="section-icon">🎯</div><h2>Objective</h2></div>
+<div class="section-header"><div class="section-icon">OBJ</div><h2>Objective</h2></div>
 <div class="doc-box"><p>${esc(d.objective)}</p></div>`);
   }
 
   if (d.scope) {
     parts.push(`
-<div class="section-header"><div class="section-icon">🔍</div><h2>Scope</h2></div>
+<div class="section-header"><div class="section-icon">SCP</div><h2>Scope</h2></div>
 <div class="doc-box"><p>${esc(d.scope)}</p></div>`);
   }
 
   if (d.safetyOrComplianceNotes) {
     parts.push(`
-<div class="section-header"><div class="section-icon">⚠️</div><h2>Safety &amp; Compliance</h2></div>
+<div class="section-header"><div class="section-icon">SAF</div><h2>Safety &amp; Compliance</h2></div>
 <div class="safety-box"><p>${esc(d.safetyOrComplianceNotes)}</p></div>`);
   }
 
   if (d.detailedProcedureMarkdown) {
     parts.push(`
-<div class="section-header"><div class="section-icon">📋</div><h2>Detailed Procedure</h2></div>
+<div class="section-header"><div class="section-icon">DOC</div><h2>Detailed Procedure</h2></div>
 <div class="doc-box">${renderMarkdown(d.detailedProcedureMarkdown)}</div>`);
   }
 
@@ -253,7 +253,7 @@ ${sop.documentation ? (() => {
 ${sop.sections.length > 0 ? sop.sections.map((s) => {
   const isSafety = s.type === "safety";
   return `
-<div class="section-header"><div class="section-icon">📄</div><h2>${esc(s.title)}</h2></div>
+<div class="section-header"><div class="section-icon">SEC</div><h2>${esc(s.title)}</h2></div>
 ${isSafety
   ? `<div class="safety-box"><p>${esc(s.content).replace(/\n/g, "<br/>")}</p></div>`
   : `<div class="doc-box"><p>${esc(s.content).replace(/\n/g, "<br/>")}</p></div>`}`;
@@ -261,7 +261,7 @@ ${isSafety
 
 <!-- ══ WORKFLOW STEPS ═══════════════════════════════════════════════ -->
 ${sop.workflowSteps.length > 0 ? `
-<div class="section-header"><div class="section-icon">⚙️</div><h2>Workflow Steps</h2></div>
+<div class="section-header"><div class="section-icon">WF</div><h2>Workflow Steps</h2></div>
 ${sop.workflowSteps.map((step) => `
 <div class="step">
   <div class="step-num">${step.stepNumber}</div>
@@ -270,15 +270,15 @@ ${sop.workflowSteps.map((step) => `
     ${step.description ? `<p class="step-desc">${esc(step.description)}</p>` : ""}
     <div class="step-meta">
       ${step.phase    ? `<span class="phase-badge">${esc(step.phase)}</span>` : ""}
-      ${step.role     ? `<span class="step-badge">👤 ${esc(step.role)}</span>` : ""}
-      ${step.duration ? `<span class="step-badge">⏱ ${esc(step.duration)}</span>` : ""}
+      ${step.role     ? `<span class="step-badge">${esc(step.role)}</span>` : ""}
+      ${step.duration ? `<span class="step-badge">${esc(step.duration)}</span>` : ""}
     </div>
   </div>
 </div>`).join("")}` : ""}
 
 <!-- ══ CHECKLIST ════════════════════════════════════════════════════ -->
 ${sop.checklistItems.length > 0 ? `
-<div class="section-header"><div class="section-icon">✅</div><h2>Checklist</h2></div>
+<div class="section-header"><div class="section-icon">CL</div><h2>Checklist</h2></div>
 <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:20px;">
 ${sop.checklistItems.map((item) => {
   const pStyle = item.priority ? priorityColor[item.priority] ?? "" : "";
@@ -288,7 +288,7 @@ ${sop.checklistItems.map((item) => {
     <span>${esc(item.text)}</span>
     ${item.isRequired      ? '<span class="req-badge">REQUIRED</span>'                                                          : ""}
     ${item.priority        ? `<span class="priority-badge" style="${pStyle}">${esc(item.priority)}</span>`                      : ""}
-    ${item.assignedRole    ? `<span class="role-tag">👤 ${esc(item.assignedRole)}</span>`                                        : ""}
+    ${item.assignedRole    ? `<span class="role-tag">${esc(item.assignedRole)}</span>`                                           : ""}
   </div>
 </div>`;
 }).join("")}
@@ -296,7 +296,7 @@ ${sop.checklistItems.map((item) => {
 
 <!-- ══ RESPONSIBILITIES ══════════════════════════════════════════════ -->
 ${sop.responsibilities.length > 0 ? `
-<div class="section-header"><div class="section-icon">👥</div><h2>Roles &amp; Responsibilities</h2></div>
+<div class="section-header"><div class="section-icon">RL</div><h2>Roles &amp; Responsibilities</h2></div>
 <table>
   <thead><tr><th style="width:28%">Role</th><th>Responsibilities</th></tr></thead>
   <tbody>
@@ -310,7 +310,7 @@ ${sop.responsibilities.length > 0 ? `
 
 <!-- ══ RESOURCES ════════════════════════════════════════════════════ -->
 ${sop.resources.length > 0 ? `
-<div class="section-header"><div class="section-icon">📦</div><h2>Required Resources</h2></div>
+<div class="section-header"><div class="section-icon">RS</div><h2>Required Resources</h2></div>
 <table>
   <thead><tr><th style="width:35%">Resource</th><th style="width:18%">Type</th><th>Description</th></tr></thead>
   <tbody>

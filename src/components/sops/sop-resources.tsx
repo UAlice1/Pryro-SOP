@@ -58,7 +58,7 @@ export function SOPResources({
 
   const updateItem = (i: number, field: keyof Resource, value: string) => {
     const u = [...items];
-    (u[i] as Record<string, unknown>)[field] = value;
+    u[i] = { ...u[i], [field]: value };
     setItems(u);
   };
 

@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, FileText, Settings,
   ChevronLeft, ChevronRight, Building2, LogOut, User,
-  BotMessageSquare, Search, Menu, X, ChevronDown,
+  BotMessageSquare, Search, Menu, X, ChevronDown, Sun, Moon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,6 +75,7 @@ export function AppSidebarContent({
 }) {
   const { data: session } = useSession();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const userRole = (session?.user as { role?: string })?.role ?? "EMPLOYEE";
   const isAdmin  = userRole === "SUPER_ADMIN" || userRole === "ORG_ADMIN";
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -159,6 +161,11 @@ export function AppSidebarContent({
             <DropdownMenuItem onClick={() => router.push("/settings")}>
               <Settings className="w-4 h-4 mr-2" /> Settings
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+              {theme === "dark"
+                ? <><Sun className="w-4 h-4 mr-2" /> Light mode</>
+                : <><Moon className="w-4 h-4 mr-2" /> Dark mode</>}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => signOut({ callbackUrl: "/login" })}
@@ -171,6 +178,90 @@ export function AppSidebarContent({
       </div>
 
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+    </div>
+  );
+}
+
+/* ─── Collapsed sidebar ─────────────────────────────────────────────────── */
+
+function CollapsedSidebar({ user }: { user: NextAuthUser }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const initials = user.name?.split(" ").map((n) => n[0]).join("").toUpperCase() ?? "U";
+
+  return (
+    <div className="flex flex-col h-full items-center py-3 gap-1">
+      {/* Brand */}
+      <div className="w-7 h-7 flex items-center justify-center mb-3 shrink-0">
+        <span className="text-[var(--sidebar-foreground)] font-bold text-xs">PS</span>
+      </div>
+
+      {/* Nav icons */}
+      {BASE_NAV.map(({ href, label, icon: Icon }) => {
+        const isActive = pathname === href || pathname.startsWith(href + "/");
+        return (
+          <Link
+            key={href}
+            href={href}
+            title={label}
+            className={cn(
+              "flex items-center justify-center w-9 h-9 rounded-lg transition-colors",
+              isActive
+                ? "bg-[var(--sidebar-accent)] text-[var(--sidebar-foreground)]"
+                : "text-[var(--sidebar-foreground)]/60 hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-foreground)]",
+            )}
+          >
+            <Icon className="w-4 h-4" />
+          </Link>
+        );
+      })}
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* User avatar with dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            title={`${user.name} — ${user.email}`}
+            className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-[var(--sidebar-accent)] transition-colors mb-1"
+            aria-label="User menu"
+          >
+            <Avatar className="w-7 h-7">
+              <AvatarImage src={user.image ?? ""} />
+              <AvatarFallback className="text-xs bg-[#2f2f2f] text-white font-medium">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="end" className="w-52 mb-1">
+          <div className="px-2 py-1.5">
+            <p className="text-sm font-medium truncate">{user.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+          </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => router.push("/settings")}>
+            <User className="w-4 h-4 mr-2" /> Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/settings")}>
+            <Settings className="w-4 h-4 mr-2" /> Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark"
+              ? <><Sun className="w-4 h-4 mr-2" /> Light mode</>
+              : <><Moon className="w-4 h-4 mr-2" /> Dark mode</>}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="text-destructive focus:text-destructive"
+          >
+            <LogOut className="w-4 h-4 mr-2" /> Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -214,23 +305,8 @@ export function AppSidebar({ user }: { user: NextAuthUser }) {
         }}
       >
         {collapsed ? (
-          /* Collapsed strip — icons only */
-          <div className="flex flex-col h-full items-center py-3 gap-1">
-            <div className="w-7 h-7 flex items-center justify-center mb-3 shrink-0">
-              <span className="text-[var(--sidebar-foreground)] font-bold text-xs">PS</span>
-            </div>
-            {/* Collapsed nav icons */}
-            {BASE_NAV.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                title={label}
-                className="flex items-center justify-center w-9 h-9 rounded-lg text-[var(--sidebar-foreground)]/60 hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-foreground)] transition-colors"
-              >
-                <Icon className="w-4 h-4" />
-              </Link>
-            ))}
-          </div>
+          /* Collapsed strip — icons + avatar at bottom */
+          <CollapsedSidebar user={user} />
         ) : (
           <AppSidebarContent user={user} />
         )}

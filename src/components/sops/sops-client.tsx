@@ -130,7 +130,7 @@ export function SOPsClient() {
           <p className="text-muted-foreground text-sm">{total} SOP{total !== 1 ? "s" : ""}</p>
         </div>
         <Button asChild>
-          <Link href="/dashboard"><Plus className="w-4 h-4 mr-2" />New SOP</Link>
+          <Link href="/assistant"><Plus className="w-4 h-4 mr-2" />New SOP</Link>
         </Button>
       </div>
 
@@ -338,7 +338,7 @@ export function SOPsClient() {
           </p>
           {activeFilterCount > 0
             ? <Button size="sm" variant="outline" onClick={clearAll}><X className="w-4 h-4 mr-1.5" />Clear filters</Button>
-            : <Button asChild size="sm"><Link href="/dashboard"><Plus className="w-4 h-4 mr-1.5" />New SOP</Link></Button>}
+            : <Button asChild size="sm"><Link href="/assistant"><Plus className="w-4 h-4 mr-1.5" />New SOP</Link></Button>}
         </div>
       ) : (
         <AnimatePresence mode="popLayout">

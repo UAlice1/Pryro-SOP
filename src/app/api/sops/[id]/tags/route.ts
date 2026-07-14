@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     include: { tag: { select: { id: true, name: true } } },
   });
 
-  return NextResponse.json(sopTags.map((st) => st.tag.name));
+  return NextResponse.json(sopTags.map((st: { tag: { id: string; name: string } }) => st.tag.name));
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

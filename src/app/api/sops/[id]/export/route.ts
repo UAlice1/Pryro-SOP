@@ -74,16 +74,60 @@ export async function GET(
   }
 
   // ── PDF ───────────────────────────────────────────────────────
-  // PDF generation is handled client-side via browser print dialog.
-  // This fallback returns the HTML version for server-side callers.
   if (format === "pdf") {
-    const html = generateSOPHTML(sop, true);
-    return new NextResponse(html, {
-      headers: {
-        "Content-Type":        "text/html; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${safeTitle}.html"`,
-      },
-    });
+    try {
+      let browser;
+      const isVercel = !!process.env.VERCEL;
+
+      if (isVercel) {
+        // On Vercel: use sparticuz chromium (serverless compatible)
+        const chromium  = await import("@sparticuz/chromium-min");
+        const puppeteer = await import("puppeteer-core");
+        const executablePath = await chromium.default.executablePath(
+          "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.tar"
+        );
+        browser = await puppeteer.default.launch({
+          args:            chromium.default.args,
+          defaultViewport: chromium.default.defaultViewport,
+          executablePath,
+          headless:        true,
+        });
+      } else {
+        // Locally: use full puppeteer with bundled Chromium
+        const puppeteer = await import("puppeteer");
+        browser = await puppeteer.default.launch({
+          headless: true,
+          args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+        });
+      }
+
+      const page = await browser.newPage();
+      await page.setContent(generateSOPHTML(sop, true), { waitUntil: "load" });
+
+      const pdfBuffer = await page.pdf({
+        format:               "A4",
+        printBackground:      true,
+        margin:               { top: "20mm", right: "15mm", bottom: "22mm", left: "15mm" },
+        displayHeaderFooter:  true,
+        headerTemplate: `<div style="font-size:9px;color:#94a3b8;width:100%;text-align:center;padding-top:8px;">${sop.title.replace(/</g, "&lt;")} &nbsp;·&nbsp; Version ${sop.version}</div>`,
+        footerTemplate: `<div style="font-size:9px;color:#94a3b8;width:100%;display:flex;justify-content:space-between;padding:0 15mm 8px;"><span>Pryro SOP &nbsp;·&nbsp; Confidential</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>`,
+      });
+
+      await browser.close();
+
+      return new NextResponse(Buffer.from(pdfBuffer) as unknown as BodyInit, {
+        headers: {
+          "Content-Type":        "application/pdf",
+          "Content-Disposition": `attachment; filename="${safeTitle}.pdf"`,
+        },
+      });
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      return NextResponse.json(
+        { error: "PDF generation failed. Please try HTML export." },
+        { status: 500 },
+      );
+    }
   }
 
   // ── DOCX ──────────────────────────────────────────────────────
@@ -115,4 +159,3 @@ export async function GET(
 
   return NextResponse.json({ error: "Unsupported format. Use html, pdf, docx, or md." }, { status: 400 });
 }
-

@@ -10,9 +10,6 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">P</span>
-            </div>
             <span className="text-xl font-semibold">Pryro SOP</span>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>

@@ -47,7 +47,7 @@ export async function POST(
 
   /* Resolve the role label for email copy */
   const role = assignedRoleId
-    ? sop.responsibilities.find((r) => r.id === assignedRoleId)
+    ? sop.responsibilities.find((r: { id: string; role: string; roleName: string | null }) => r.id === assignedRoleId)
     : null;
   const roleLabel = role ? (role.roleName ?? role.role) : null;
 

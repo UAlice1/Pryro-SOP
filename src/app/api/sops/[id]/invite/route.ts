@@ -4,8 +4,6 @@ import { db } from "@/lib/db";
 import { z } from "zod";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const schema = z.object({
   emails: z
     .array(z.string().email("Invalid email address"))
@@ -86,6 +84,7 @@ export async function POST(
 
       /* Send email via Resend */
       if (process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
           from:    process.env.RESEND_FROM_EMAIL ?? "Pryro SOP <noreply@pryro.app>",
           to:      [email],

@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       status:        "ACTIVE",
       launchedById:  session.user.id,
       taskExecutions: {
-        create: sop.checklistItems.map((item) => ({
+        create: sop.checklistItems.map((item: { id: string }) => ({
           checklistId: item.id,
           isCompleted: false,
         })),

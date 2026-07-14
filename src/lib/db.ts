@@ -10,7 +10,7 @@ function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL!;
   // PrismaNeonHttp takes the connection string directly
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const adapter = new PrismaNeonHttp(connectionString) as any;
+  const adapter = new PrismaNeonHttp(connectionString, {}) as any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return new PrismaClient({ adapter } as any);
 }

@@ -47,7 +47,7 @@ export async function PATCH(req: NextRequest) {
   const allExecutions = await db.checklistTaskExecution.findMany({
     where: { instanceId },
   });
-  const allDone = allExecutions.every((e) => e.isCompleted);
+  const allDone = allExecutions.every((e: { isCompleted: boolean }) => e.isCompleted);
   if (allDone) {
     await db.sOPInstance.update({
       where: { id: instanceId },

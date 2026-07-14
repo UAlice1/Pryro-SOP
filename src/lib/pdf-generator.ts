@@ -109,10 +109,6 @@ export function generateSOPHTML(sop: SOPExportData, forPDF = false): string {
 
   /* ── Header ── */
   .header      { border-bottom: 3px solid #1e293b; padding-bottom: 20px; margin-bottom: 28px; }
-  .brand-row   { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-  .brand-badge { background: #1e293b; color: white; padding: 5px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; letter-spacing: .5px; }
-  .tag-pill    { background: #f1f5f9; color: #475569; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid #e2e8f0; }
-  .badge       { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
   .header h1   { font-size: 26px; margin: 0 0 6px; color: #0f172a; line-height: 1.3; }
   .desc        { color: #64748b; margin: 0; font-size: 13px; }
 
@@ -126,8 +122,7 @@ export function generateSOPHTML(sop: SOPExportData, forPDF = false): string {
   .approval-banner span { font-size: 13px; color: #166534; font-weight: 500; }
 
   /* ── Section headings ── */
-  .section-header { display: flex; align-items: center; gap: 10px; margin-top: 36px; margin-bottom: 12px; }
-  .section-icon   { width: 28px; height: 28px; border-radius: 6px; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .section-header { display: flex; align-items: center; margin-top: 36px; margin-bottom: 12px; }
   h2 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0; }
   h3 { font-size: 13px; font-weight: 600; color: #374151; margin: 16px 0 6px; }
 
@@ -187,14 +182,6 @@ export function generateSOPHTML(sop: SOPExportData, forPDF = false): string {
 
 <!-- ══ HEADER ══════════════════════════════════════════════════════ -->
 <div class="header">
-  <div class="brand-row">
-    <div class="brand-badge">Pryro SOP</div>
-    <span class="badge" style="background:#dcfce7;color:#166534;">v${sop.version}</span>
-    <span class="badge" style="background:#e0f2fe;color:#0369a1;">${esc(sop.status)}</span>
-    ${sop.industry            ? `<span class="tag-pill">${esc(sop.industry)}</span>` : ""}
-    ${sop.complianceFramework ? `<span class="tag-pill">${esc(sop.complianceFramework)}</span>` : ""}
-    ${tags.map((t) => `<span class="tag-pill">${esc(t)}</span>`).join("")}
-  </div>
   <h1>${esc(sop.title)}</h1>
   ${sop.description ? `<p class="desc">${esc(sop.description)}</p>` : ""}
 </div>
@@ -224,25 +211,25 @@ ${sop.documentation ? (() => {
 
   if (d.objective) {
     parts.push(`
-<div class="section-header"><div class="section-icon">OBJ</div><h2>Objective</h2></div>
+<div class="section-header"><h2>Objective</h2></div>
 <div class="doc-box"><p>${esc(d.objective)}</p></div>`);
   }
 
   if (d.scope) {
     parts.push(`
-<div class="section-header"><div class="section-icon">SCP</div><h2>Scope</h2></div>
+<div class="section-header"><h2>Scope</h2></div>
 <div class="doc-box"><p>${esc(d.scope)}</p></div>`);
   }
 
   if (d.safetyOrComplianceNotes) {
     parts.push(`
-<div class="section-header"><div class="section-icon">SAF</div><h2>Safety &amp; Compliance</h2></div>
+<div class="section-header"><h2>Safety &amp; Compliance</h2></div>
 <div class="safety-box"><p>${esc(d.safetyOrComplianceNotes)}</p></div>`);
   }
 
   if (d.detailedProcedureMarkdown) {
     parts.push(`
-<div class="section-header"><div class="section-icon">DOC</div><h2>Detailed Procedure</h2></div>
+<div class="section-header"><h2>Detailed Procedure</h2></div>
 <div class="doc-box">${renderMarkdown(d.detailedProcedureMarkdown)}</div>`);
   }
 
@@ -253,7 +240,7 @@ ${sop.documentation ? (() => {
 ${sop.sections.length > 0 ? sop.sections.map((s) => {
   const isSafety = s.type === "safety";
   return `
-<div class="section-header"><div class="section-icon">SEC</div><h2>${esc(s.title)}</h2></div>
+<div class="section-header"><h2>${esc(s.title)}</h2></div>
 ${isSafety
   ? `<div class="safety-box"><p>${esc(s.content).replace(/\n/g, "<br/>")}</p></div>`
   : `<div class="doc-box"><p>${esc(s.content).replace(/\n/g, "<br/>")}</p></div>`}`;
@@ -261,7 +248,7 @@ ${isSafety
 
 <!-- ══ WORKFLOW STEPS ═══════════════════════════════════════════════ -->
 ${sop.workflowSteps.length > 0 ? `
-<div class="section-header"><div class="section-icon">WF</div><h2>Workflow Steps</h2></div>
+<div class="section-header"><h2>Workflow Steps</h2></div>
 ${sop.workflowSteps.map((step) => `
 <div class="step">
   <div class="step-num">${step.stepNumber}</div>
@@ -278,7 +265,7 @@ ${sop.workflowSteps.map((step) => `
 
 <!-- ══ CHECKLIST ════════════════════════════════════════════════════ -->
 ${sop.checklistItems.length > 0 ? `
-<div class="section-header"><div class="section-icon">CL</div><h2>Checklist</h2></div>
+<div class="section-header"><h2>Checklist</h2></div>
 <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:20px;">
 ${sop.checklistItems.map((item) => {
   const pStyle = item.priority ? priorityColor[item.priority] ?? "" : "";
@@ -296,7 +283,7 @@ ${sop.checklistItems.map((item) => {
 
 <!-- ══ RESPONSIBILITIES ══════════════════════════════════════════════ -->
 ${sop.responsibilities.length > 0 ? `
-<div class="section-header"><div class="section-icon">RL</div><h2>Roles &amp; Responsibilities</h2></div>
+<div class="section-header"><h2>Roles &amp; Responsibilities</h2></div>
 <table>
   <thead><tr><th style="width:28%">Role</th><th>Responsibilities</th></tr></thead>
   <tbody>
@@ -310,7 +297,7 @@ ${sop.responsibilities.length > 0 ? `
 
 <!-- ══ RESOURCES ════════════════════════════════════════════════════ -->
 ${sop.resources.length > 0 ? `
-<div class="section-header"><div class="section-icon">RS</div><h2>Required Resources</h2></div>
+<div class="section-header"><h2>Required Resources</h2></div>
 <table>
   <thead><tr><th style="width:35%">Resource</th><th style="width:18%">Type</th><th>Description</th></tr></thead>
   <tbody>

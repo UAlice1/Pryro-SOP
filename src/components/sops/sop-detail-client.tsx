@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,7 @@ interface SOPData {
 
 export function SOPDetailClient({ id }: { id: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const currentUserId = (session?.user as { id?: string })?.id ?? "";
   const userRole      = (session?.user as { role?: string })?.role ?? "EMPLOYEE";
@@ -84,7 +85,7 @@ export function SOPDetailClient({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState<"html" | "pdf" | "docx" | "md" | null>(null);
-  const [activeTab, setActiveTab] = useState("editor");
+  const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") ?? "editor");
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const fetchSOP = useCallback(async () => {
@@ -138,6 +139,202 @@ export function SOPDetailClient({ id }: { id: string }) {
 
   const handleExport = async (format: "html" | "pdf" | "docx" | "md") => {
     if (exporting) return;
+
+    // PDF: client-side generation using jsPDF with text content
+    // Reliable on all browsers, no canvas/iframe needed
+    if (format === "pdf") {
+      setExporting("pdf");
+      try {
+        const { jsPDF } = await import("jspdf");
+
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        const pageW   = doc.internal.pageSize.getWidth();
+        const pageH   = doc.internal.pageSize.getHeight();
+        const margin  = 18;
+        const maxW    = pageW - margin * 2;
+        let   y       = margin;
+
+        const checkPage = (needed = 8) => {
+          if (y + needed > pageH - margin) { doc.addPage(); y = margin; }
+        };
+
+        const writeLine = (text: string, size: number, style: "normal" | "bold" = "normal", color = "#1a1a1a") => {
+          checkPage(size + 2);
+          doc.setFontSize(size);
+          doc.setFont("helvetica", style);
+          doc.setTextColor(color);
+          const lines = doc.splitTextToSize(text, maxW) as string[];
+          lines.forEach((line) => {
+            checkPage(size + 1);
+            doc.text(line, margin, y);
+            y += size * 0.45;
+          });
+          y += 2;
+        };
+
+        const writeSection = (title: string, content: string) => {
+          checkPage(20);
+          y += 3;
+          // Section title bar
+          doc.setFillColor("#f4f4f4");
+          doc.roundedRect(margin - 2, y - 5, maxW + 4, 8, 1, 1, "F");
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor("#0d0d0d");
+          doc.text(title, margin, y);
+          y += 6;
+          // Content
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor("#374151");
+          const lines = doc.splitTextToSize(content, maxW) as string[];
+          lines.forEach((line) => {
+            checkPage(5);
+            doc.text(line, margin, y);
+            y += 4.5;
+          });
+          y += 3;
+        };
+
+        if (!sop) throw new Error("No SOP data");
+
+        // ── Header ──────────────────────────────────────────────
+        doc.setFillColor("#0d0d0d");
+        doc.rect(0, 0, pageW, 22, "F");
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor("#ffffff");
+        doc.text(sop.title, margin, 14);
+        y = 30;
+
+        // Description
+        if (sop.description) {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor("#6b7280");
+          const descLines = doc.splitTextToSize(sop.description, maxW) as string[];
+          descLines.forEach((l) => { doc.text(l, margin, y); y += 4.5; });
+          y += 2;
+        }
+
+        // ── Meta row ────────────────────────────────────────────
+        doc.setFillColor("#f9f9f9");
+        doc.roundedRect(margin - 2, y, maxW + 4, 16, 2, 2, "F");
+        const meta = [
+          ["Author", sop.author.name ?? "—"],
+          ["Status", sop.status],
+          ["Version", `v${sop.version}`],
+          ["Updated", new Date(sop.updatedAt).toLocaleDateString()],
+        ];
+        const colW = maxW / meta.length;
+        meta.forEach(([label, val], i) => {
+          const x = margin + i * colW;
+          doc.setFontSize(7); doc.setFont("helvetica", "normal"); doc.setTextColor("#9ca3af");
+          doc.text(label.toUpperCase(), x, y + 5);
+          doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.setTextColor("#0d0d0d");
+          doc.text(val, x, y + 11);
+        });
+        y += 22;
+
+        // ── Sections ────────────────────────────────────────────
+        if (sop.sections.length > 0) {
+          sop.sections.forEach((s) => writeSection(s.title, s.content));
+        }
+
+        // ── Workflow ────────────────────────────────────────────
+        if (sop.workflowSteps.length > 0) {
+          checkPage(15);
+          writeLine("Workflow Steps", 11, "bold");
+          sop.workflowSteps.forEach((step) => {
+            checkPage(12);
+            doc.setFillColor("#f4f4f4");
+            doc.roundedRect(margin - 2, y - 4, maxW + 4, 10, 1, 1, "F");
+            doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor("#0d0d0d");
+            doc.text(`${step.stepNumber}. ${step.title}`, margin + 1, y);
+            if (step.role) {
+              doc.setFontSize(7); doc.setFont("helvetica", "normal"); doc.setTextColor("#6b7280");
+              doc.text(step.role, pageW - margin - doc.getTextWidth(step.role), y);
+            }
+            y += 5;
+            if (step.description) {
+              doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor("#374151");
+              const lines = doc.splitTextToSize(step.description, maxW - 4) as string[];
+              lines.forEach((l) => { checkPage(5); doc.text(l, margin + 2, y); y += 4; });
+            }
+            y += 3;
+          });
+        }
+
+        // ── Checklist ───────────────────────────────────────────
+        if (sop.checklistItems.length > 0) {
+          checkPage(15);
+          writeLine("Checklist", 11, "bold");
+          sop.checklistItems.forEach((item) => {
+            checkPage(6);
+            doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor("#374151");
+            doc.setDrawColor("#cbd5e1");
+            doc.rect(margin, y - 3, 3.5, 3.5);
+            const label = item.text + (item.isRequired ? " *" : "");
+            const lines = doc.splitTextToSize(label, maxW - 8) as string[];
+            lines.forEach((l, li) => { doc.text(l, margin + 6, y + li * 4); });
+            y += Math.max(5, lines.length * 4 + 1);
+          });
+          y += 2;
+        }
+
+        // ── Responsibilities ────────────────────────────────────
+        if (sop.responsibilities.length > 0) {
+          checkPage(15);
+          writeLine("Roles & Responsibilities", 11, "bold");
+          sop.responsibilities.forEach((r) => {
+            checkPage(10);
+            doc.setFontSize(8.5); doc.setFont("helvetica", "bold"); doc.setTextColor("#0d0d0d");
+            doc.text(r.role, margin, y); y += 4.5;
+            doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor("#374151");
+            const lines = doc.splitTextToSize(r.description, maxW - 4) as string[];
+            lines.forEach((l) => { checkPage(5); doc.text(l, margin + 3, y); y += 4; });
+            y += 2;
+          });
+        }
+
+        // ── Resources ───────────────────────────────────────────
+        if (sop.resources.length > 0) {
+          checkPage(15);
+          writeLine("Required Resources", 11, "bold");
+          sop.resources.forEach((r) => {
+            checkPage(8);
+            doc.setFontSize(8.5); doc.setFont("helvetica", "bold"); doc.setTextColor("#0d0d0d");
+            doc.text(`• ${r.name}${r.type ? ` (${r.type})` : ""}`, margin, y); y += 4.5;
+            if (r.description) {
+              doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor("#6b7280");
+              const lines = doc.splitTextToSize(r.description, maxW - 4) as string[];
+              lines.forEach((l) => { checkPage(5); doc.text(l, margin + 3, y); y += 4; });
+            }
+            y += 1;
+          });
+        }
+
+        // ── Footer on each page ─────────────────────────────────
+        const totalPages = doc.getNumberOfPages();
+        for (let p = 1; p <= totalPages; p++) {
+          doc.setPage(p);
+          doc.setFontSize(7); doc.setFont("helvetica", "normal"); doc.setTextColor("#9ca3af");
+          doc.text(`Pryro SOP  ·  ${sop.title}  ·  v${sop.version}`, margin, pageH - 8);
+          doc.text(`Page ${p} of ${totalPages}`, pageW - margin, pageH - 8, { align: "right" });
+          doc.setDrawColor("#e5e7eb");
+          doc.line(margin, pageH - 11, pageW - margin, pageH - 11);
+        }
+
+        doc.save(`${sop.title.replace(/[^a-zA-Z0-9\s\-_]/g, "").trim() || "sop"}.pdf`);
+        toast.success("PDF downloaded");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "PDF export failed");
+      } finally {
+        setExporting(null);
+      }
+      return;
+    }
+
     setExporting(format);
     try {
       const res = await fetch(`/api/sops/${id}/export?format=${format}`);

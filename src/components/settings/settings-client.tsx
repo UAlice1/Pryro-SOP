@@ -14,32 +14,9 @@ import { Separator } from "@/components/ui/separator";
 import {
   Loader2, Save, Key, Cpu, User, Eye, EyeOff, CheckCircle,
   Building2, Users, Folder, Plus, Pencil, X, Check,
-  ExternalLink, Zap, AlertTriangle, Globe, Bot, Workflow,
-  Waves, Shuffle, Settings2,
+  ExternalLink, Zap, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-/* ─── Provider icon map ──────────────────────────────────────────────────── */
-
-const PROVIDER_ICONS: Record<string, React.ReactNode> = {
-  openai:     <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0L4.01 14.142a4.504 4.504 0 0 1-1.67-6.246zm16.597 3.855l-5.843-3.369 2.02-1.168a.076.076 0 0 1 .071 0l4.808 2.777a4.5 4.5 0 0 1-.689 8.117v-5.678a.79.79 0 0 0-.367-.679zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.808-2.773a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08L8.704 5.46a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/></svg>,
-  anthropic:  <Bot className="w-5 h-5" />,
-  groq:       <Zap className="w-5 h-5" />,
-  deepseek:   <Cpu className="w-5 h-5" />,
-  mistral:    <Waves className="w-5 h-5" />,
-  openrouter: <Shuffle className="w-5 h-5" />,
-  custom:     <Settings2 className="w-5 h-5" />,
-};
-
-const PROVIDER_ICON_BG: Record<string, string> = {
-  openai:     "bg-black text-white dark:bg-white dark:text-black",
-  anthropic:  "bg-orange-500 text-white",
-  groq:       "bg-yellow-400 text-black",
-  deepseek:   "bg-blue-600 text-white",
-  mistral:    "bg-cyan-500 text-white",
-  openrouter: "bg-purple-600 text-white",
-  custom:     "bg-muted text-muted-foreground",
-};
 
 /* ─── AI Provider definitions ────────────────────────────────────────────── */
 
@@ -50,13 +27,13 @@ interface ProviderDef {
 }
 
 const PROVIDERS: ProviderDef[] = [
-  { id: "openai",     label: "OpenAI",          logo: "openai",     color: "border-gray-200 dark:border-gray-700",     docsUrl: "https://platform.openai.com/api-keys",        keyHint: "sk-...",       baseUrl: "https://api.openai.com/v1",       supportsWhisper: true,  models: ["gpt-4o","gpt-4o-mini","gpt-4-turbo","gpt-4","gpt-3.5-turbo","o1","o1-mini","o3-mini"] },
-  { id: "anthropic",  label: "Anthropic",        logo: "anthropic",  color: "border-orange-200 dark:border-orange-800", docsUrl: "https://console.anthropic.com/settings/keys",  keyHint: "sk-ant-...",   baseUrl: "https://api.anthropic.com/v1",    supportsWhisper: false, models: ["claude-opus-4-5","claude-sonnet-4-5","claude-3-5-sonnet-20241022","claude-3-5-haiku-20241022","claude-3-opus-20240229"] },
-  { id: "groq",       label: "Groq",             logo: "groq",       color: "border-yellow-200 dark:border-yellow-800", docsUrl: "https://console.groq.com/keys",                keyHint: "gsk_...",      baseUrl: "https://api.groq.com/openai/v1",  supportsWhisper: true,  models: ["llama-3.3-70b-versatile","llama-3.1-70b-versatile","mixtral-8x7b-32768","gemma2-9b-it"] },
-  { id: "deepseek",   label: "DeepSeek",         logo: "deepseek",   color: "border-blue-200 dark:border-blue-800",     docsUrl: "https://platform.deepseek.com/api_keys",      keyHint: "sk-...",       baseUrl: "https://api.deepseek.com/v1",     supportsWhisper: false, models: ["deepseek-chat","deepseek-coder","deepseek-reasoner"] },
-  { id: "mistral",    label: "Mistral AI",       logo: "mistral",    color: "border-cyan-200 dark:border-cyan-800",     docsUrl: "https://console.mistral.ai/api-keys/",        keyHint: "...",          baseUrl: "https://api.mistral.ai/v1",       supportsWhisper: false, models: ["mistral-large-latest","mistral-medium-latest","mistral-small-latest","codestral-latest","open-mixtral-8x22b"] },
-  { id: "openrouter", label: "OpenRouter",       logo: "openrouter", color: "border-purple-200 dark:border-purple-800", docsUrl: "https://openrouter.ai/keys",                  keyHint: "sk-or-...",    baseUrl: "https://openrouter.ai/api/v1",    supportsWhisper: false, models: ["openai/gpt-4o","openai/gpt-4o-mini","anthropic/claude-3.5-sonnet","google/gemini-pro-1.5","meta-llama/llama-3.1-70b-instruct"] },
-  { id: "custom",     label: "Custom Endpoint",  logo: "custom",     color: "border-gray-200 dark:border-gray-700",     docsUrl: "",                                             keyHint: "your-api-key", baseUrl: "",                                supportsWhisper: false, models: [] },
+  { id: "openai",     label: "OpenAI",          logo: "openai",     color: "border-border", docsUrl: "https://platform.openai.com/api-keys",        keyHint: "sk-...",       baseUrl: "https://api.openai.com/v1",       supportsWhisper: true,  models: ["gpt-4o","gpt-4o-mini","gpt-4-turbo","gpt-4","gpt-3.5-turbo","o1","o1-mini","o3-mini"] },
+  { id: "anthropic",  label: "Anthropic",        logo: "anthropic",  color: "border-border", docsUrl: "https://console.anthropic.com/settings/keys",  keyHint: "sk-ant-...",   baseUrl: "https://api.anthropic.com/v1",    supportsWhisper: false, models: ["claude-opus-4-5","claude-sonnet-4-5","claude-3-5-sonnet-20241022","claude-3-5-haiku-20241022","claude-3-opus-20240229"] },
+  { id: "groq",       label: "Groq",             logo: "groq",       color: "border-border", docsUrl: "https://console.groq.com/keys",                keyHint: "gsk_...",      baseUrl: "https://api.groq.com/openai/v1",  supportsWhisper: true,  models: ["llama-3.3-70b-versatile","llama-3.1-70b-versatile","mixtral-8x7b-32768","gemma2-9b-it"] },
+  { id: "deepseek",   label: "DeepSeek",         logo: "deepseek",   color: "border-border", docsUrl: "https://platform.deepseek.com/api_keys",      keyHint: "sk-...",       baseUrl: "https://api.deepseek.com/v1",     supportsWhisper: false, models: ["deepseek-chat","deepseek-coder","deepseek-reasoner"] },
+  { id: "mistral",    label: "Mistral AI",       logo: "mistral",    color: "border-border", docsUrl: "https://console.mistral.ai/api-keys/",        keyHint: "...",          baseUrl: "https://api.mistral.ai/v1",       supportsWhisper: false, models: ["mistral-large-latest","mistral-medium-latest","mistral-small-latest","codestral-latest","open-mixtral-8x22b"] },
+  { id: "openrouter", label: "OpenRouter",       logo: "openrouter", color: "border-border", docsUrl: "https://openrouter.ai/keys",                  keyHint: "sk-or-...",    baseUrl: "https://openrouter.ai/api/v1",    supportsWhisper: false, models: ["openai/gpt-4o","openai/gpt-4o-mini","anthropic/claude-3.5-sonnet","google/gemini-pro-1.5","meta-llama/llama-3.1-70b-instruct"] },
+  { id: "custom",     label: "Custom Endpoint",  logo: "custom",     color: "border-border", docsUrl: "",                                             keyHint: "your-api-key", baseUrl: "",                                supportsWhisper: false, models: [] },
 ];
 
 /* ─── AI form state ──────────────────────────────────────────────────────── */
@@ -198,9 +175,6 @@ function AIProviderSettings() {
       {form.savedProvider && (
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="p-4 flex items-center gap-4">
-            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", PROVIDER_ICON_BG[form.savedProvider] ?? "bg-muted text-muted-foreground")}>
-              {PROVIDER_ICONS[form.savedProvider] ?? <Cpu className="w-5 h-5" />}
-            </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-semibold">
@@ -228,11 +202,8 @@ function AIProviderSettings() {
           {PROVIDERS.map((p) => (
             <button key={p.id} onClick={() => setProvider(p.id)}
               className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-left",
-                form.activeProvider === p.id ? "border-primary bg-primary/5 ring-1 ring-primary" : `${p.color} hover:bg-muted/50`)}
+                form.activeProvider === p.id ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:bg-muted/50")}
             >
-              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", PROVIDER_ICON_BG[p.id] ?? "bg-muted text-muted-foreground")}>
-                {PROVIDER_ICONS[p.id] ?? <Cpu className="w-4 h-4" />}
-              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{p.label}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{p.models[0] ?? "Custom"}</p>
@@ -246,15 +217,10 @@ function AIProviderSettings() {
 
         {/* Right: config */}
         <div className="lg:col-span-2 space-y-4">
-          <Card className={cn("border-2 transition-colors", activeProviderDef.color)}>
+          <Card className="border transition-colors">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", PROVIDER_ICON_BG[activeProviderDef.id] ?? "bg-muted text-muted-foreground")}>
-                    {PROVIDER_ICONS[activeProviderDef.id] ?? <Cpu className="w-4 h-4" />}
-                  </div>
-                  {activeProviderDef.label}
-                </CardTitle>
+                <CardTitle className="text-base">{activeProviderDef.label}</CardTitle>
                 {activeProviderDef.docsUrl && (
                   <Button variant="ghost" size="sm" asChild className="h-7 text-xs gap-1 text-muted-foreground">
                     <a href={activeProviderDef.docsUrl} target="_blank" rel="noopener noreferrer">

@@ -347,9 +347,7 @@ export function SOPsClient() {
               <motion.div key={sop.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ delay: i * 0.03 }}>
                 <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-sm transition-all group">
                   <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    {sop.isAIGenerated
-                      ? <Sparkles className="w-4 h-4 text-purple-500" />
-                      : <FileText className="w-4 h-4 text-muted-foreground" />}
+                    <FileText className="w-4 h-4 text-muted-foreground" />
                   </div>
 
                   <div className="flex-1 min-w-0">

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { NewSOPClient } from "@/components/sops/new-sop-client";
-import { PageTransition } from "@/components/page-transition";
+import { NewSOPPage } from "@/components/sops/new-sop-page";
 
 export const metadata: Metadata = { title: "New SOP" };
 
-export default function NewSOPPage() {
-  return <PageTransition><NewSOPClient /></PageTransition>;
+export default function NewSOPRoute() {
+  return <NewSOPPage />;
 }

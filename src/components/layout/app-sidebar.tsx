@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, FileText, Settings,
   ChevronLeft, ChevronRight, Building2, LogOut, User,
-  BotMessageSquare, Search, Menu, X, ChevronDown, Sun, Moon,
+  Plus, Search, Menu, X, ChevronDown, Sun, Moon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,9 +25,9 @@ import type { User as NextAuthUser } from "next-auth";
 /* ─── Nav items ─────────────────────────────────────────────────────────── */
 
 const BASE_NAV = [
-  { href: "/assistant", label: "AI Assistant", icon: BotMessageSquare },
-  { href: "/sops",      label: "My SOPs",       icon: FileText         },
-  { href: "/settings",  label: "Settings",      icon: Settings         },
+  { href: "/sops/new",  label: "New SOP",  icon: Plus     },
+  { href: "/sops",      label: "My SOPs",  icon: FileText },
+  { href: "/settings",  label: "Settings", icon: Settings },
 ];
 
 function NavItem({
@@ -43,7 +43,7 @@ function NavItem({
   const isActive = (() => {
     if (href.includes("?")) return false;
     if (href === "/sops/new") return pathname === "/sops/new";
-    if (href === "/sops") return pathname === "/sops" || (pathname.startsWith("/sops/") && !pathname.startsWith("/sops/new"));
+    if (href === "/sops") return pathname === "/sops" || (pathname.startsWith("/sops/") && pathname !== "/sops/new");
     return pathname === href || pathname.startsWith(href + "/");
   })();
 
@@ -69,9 +69,11 @@ function NavItem({
 export function AppSidebarContent({
   user,
   onNavigate,
+  onCollapse,
 }: {
   user: NextAuthUser;
   onNavigate?: () => void;
+  onCollapse?: () => void;
 }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -90,11 +92,20 @@ export function AppSidebarContent({
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: "var(--sidebar)" }}>
 
-      {/* ── Top header: Logo ────────────────────────────────── */}
-      <div className="flex items-center px-3 py-3 shrink-0">
-        <span className="font-bold text-sm tracking-tight text-[var(--sidebar-foreground)]">
-          Pryro SOP
-        </span>
+      {/* ── Top header: Logo + collapse button ─────────────────── */}
+      <div className="flex items-center justify-between px-3 py-3 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <span className="font-bold text-sm tracking-tight text-[var(--sidebar-foreground)]">Pryro SOP</span>
+        </div>
+        {onCollapse && (
+          <button
+            onClick={onCollapse}
+            aria-label="Collapse sidebar"
+            className="flex items-center justify-center w-6 h-6 rounded-md text-[var(--sidebar-foreground)]/40 hover:text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] transition-colors"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {/* ── Search bar ──────────────────────────────────────── */}
@@ -184,7 +195,7 @@ export function AppSidebarContent({
 
 /* ─── Collapsed sidebar ─────────────────────────────────────────────────── */
 
-function CollapsedSidebar({ user }: { user: NextAuthUser }) {
+function CollapsedSidebar({ user, onExpand }: { user: NextAuthUser; onExpand?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
@@ -192,11 +203,14 @@ function CollapsedSidebar({ user }: { user: NextAuthUser }) {
 
   return (
     <div className="flex flex-col h-full items-center py-3 gap-1">
-      {/* Brand */}
-      <div className="w-7 h-7 flex items-center justify-center mb-3 shrink-0">
-        <span className="text-[var(--sidebar-foreground)] font-bold text-xs">PS</span>
-      </div>
-
+      {/* Expand button at top */}
+      <button
+        onClick={onExpand}
+        aria-label="Expand sidebar"
+        className="flex items-center justify-center w-7 h-7 rounded-md text-[var(--sidebar-foreground)]/40 hover:text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] transition-colors mb-2"
+      >
+        <ChevronRight className="w-3.5 h-3.5" />
+      </button>
       {/* Nav icons */}
       {BASE_NAV.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href || pathname.startsWith(href + "/");
@@ -297,7 +311,7 @@ export function AppSidebar({ user }: { user: NextAuthUser }) {
       <aside
         className={cn(
           "hidden md:flex flex-col border-r transition-all duration-300 ease-in-out shrink-0 relative",
-          collapsed ? "w-16" : "w-[260px]",
+          collapsed ? "w-16" : "w-[200px]",
         )}
         style={{
           background: "var(--sidebar)",
@@ -306,22 +320,10 @@ export function AppSidebar({ user }: { user: NextAuthUser }) {
       >
         {collapsed ? (
           /* Collapsed strip — icons + avatar at bottom */
-          <CollapsedSidebar user={user} />
+          <CollapsedSidebar user={user} onExpand={() => setCollapsed(false)} />
         ) : (
-          <AppSidebarContent user={user} />
+          <AppSidebarContent user={user} onCollapse={() => setCollapsed(true)} />
         )}
-
-        {/* Collapse toggle tab */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="absolute top-1/2 -right-3 -translate-y-1/2 z-20 flex items-center justify-center w-6 h-6 rounded-full border bg-[var(--sidebar)] shadow-sm text-[var(--sidebar-foreground)]/50 hover:text-[var(--sidebar-foreground)] transition-colors"
-          style={{ borderColor: "var(--sidebar-border)" }}
-        >
-          {collapsed
-            ? <ChevronRight className="w-3 h-3" />
-            : <ChevronLeft className="w-3 h-3" />}
-        </button>
       </aside>
 
       {/* Mobile drawer */}

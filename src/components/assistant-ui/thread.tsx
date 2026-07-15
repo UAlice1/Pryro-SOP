@@ -239,7 +239,7 @@ const ThreadWelcome: FC = () => (
         icon={<Sparkles className="w-5 h-5" />}
         title="Generate with AI"
         description="Describe your process in plain English and I'll build a complete SOP instantly."
-        prompt="I need an SOP for "
+        href="/sops/new"
       />
       <WelcomeActionCard
         icon={<FileText className="w-5 h-5" />}

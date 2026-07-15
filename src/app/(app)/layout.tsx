@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AppSidebar user={session.user} />
 
         {/* Main content area */}
-        <main className="flex-1 overflow-y-auto min-w-0 bg-background px-6 py-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <main className="flex-1 overflow-hidden min-w-0 bg-background flex flex-col">
           {children}
         </main>
       </div>

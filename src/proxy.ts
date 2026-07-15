@@ -71,7 +71,7 @@ export default async function proxy(req: NextRequest) {
   // ── 2. Auth pages — redirect logged-in users to dashboard ─────────────────
   if (PUBLIC_PAGES.includes(pathname)) {
     if (isAuthenticated) {
-      return NextResponse.redirect(new URL("/assistant", req.url));
+      return NextResponse.redirect(new URL("/sops/new", req.url));
     }
     return NextResponse.next();
   }

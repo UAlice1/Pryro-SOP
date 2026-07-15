@@ -61,7 +61,7 @@ export function RegisterForm() {
         router.push("/login");
       } else {
         toast.success("Welcome to Pryro SOP!");
-        router.push("/assistant");
+        router.push("/sops/new");
         router.refresh();
       }
     } catch {

@@ -5,5 +5,9 @@ import { PageTransition } from "@/components/page-transition";
 export const metadata: Metadata = { title: "SOPs" };
 
 export default function SOPsPage() {
-  return <PageTransition><SOPsClient /></PageTransition>;
+  return (
+    <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageTransition><SOPsClient /></PageTransition>
+    </div>
+  );
 }

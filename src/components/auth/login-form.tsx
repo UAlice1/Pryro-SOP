@@ -41,7 +41,7 @@ export function LoginForm() {
       if (result?.error) {
         toast.error("Invalid email or password");
       } else {
-        router.push("/assistant");
+        router.push("/sops/new");
         router.refresh();
       }
     } catch {

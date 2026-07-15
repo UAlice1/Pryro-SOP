@@ -11,8 +11,10 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
 
   return (
-    <PageTransition>
-      <DashboardClient userName={session.user.name ?? "User"} />
-    </PageTransition>
+    <div className="flex-1 overflow-y-auto px-6 py-4">
+      <PageTransition>
+        <DashboardClient userName={session.user.name ?? "User"} />
+      </PageTransition>
+    </div>
   );
 }

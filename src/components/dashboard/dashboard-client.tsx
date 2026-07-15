@@ -134,13 +134,13 @@ export function DashboardClient({ userName }: { userName: string }) {
   ];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-4 max-w-6xl mx-auto">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Good {getGreeting()}, {userName.split(" ")[0]} 👋
+            Good {getGreeting()}, {userName.split(" ")[0]}
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">
             Here&apos;s your SOP status
@@ -172,7 +172,7 @@ export function DashboardClient({ userName }: { userName: string }) {
       )}
 
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {statCards.map((card, i) => (
           <motion.div
             key={card.title}
@@ -185,16 +185,13 @@ export function DashboardClient({ userName }: { userName: string }) {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-sm text-muted-foreground">{card.title}</p>
-                    <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}>
-                      <card.icon className={`w-4 h-4 ${card.color}`} />
-                    </div>
                   </div>
                   {isLoading ? (
                     <Skeleton className="h-8 w-16" />
                   ) : (
                     <>
-                      <p className="text-3xl font-bold">{card.value}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{card.sub}</p>
+                  <p className="text-3xl font-bold">{card.value}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{card.sub}</p>
                     </>
                   )}
                 </CardContent>
@@ -205,7 +202,7 @@ export function DashboardClient({ userName }: { userName: string }) {
       </div>
 
       {/* ── Quick actions ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {canCreate && (
           <QuickAction
             icon={<Sparkles className="w-4 h-4 text-purple-500" />}
@@ -252,10 +249,10 @@ export function DashboardClient({ userName }: { userName: string }) {
       </div>
 
       {/* ── Main content grid ───────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Recent SOPs — 2/3 width */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4">
           <RecentSOPsCard sops={stats?.recent ?? []} loading={isLoading} onGenerateClick={() => setAiDialogOpen(true)} canCreate={canCreate} />
 
           {/* Pending approvals list — only for APPROVER+ */}
@@ -265,7 +262,7 @@ export function DashboardClient({ userName }: { userName: string }) {
         </div>
 
         {/* Right column — activity + AI stats */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           <ActivityCard activity={stats?.recentActivity ?? []} loading={isLoading} canViewAll={stats?.canViewAll ?? false} />
           <AIStatsCard
             aiUsage={stats?.aiUsage ?? 0}
@@ -294,10 +291,7 @@ function QuickAction({
   onClick?: () => void;
 }) {
   const inner = (
-    <div className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group">
-      <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
-        {icon}
-      </div>
+    <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer group">
       <div className="min-w-0">
         <p className="text-sm font-medium group-hover:text-primary transition-colors">{title}</p>
         <p className="text-xs text-muted-foreground truncate">{desc}</p>
@@ -321,9 +315,7 @@ function RecentSOPsCard({
   return (
     <Card>
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
-        <CardTitle className="text-base flex items-center gap-2">
-          <FileText className="w-4 h-4" /> Recently Created
-        </CardTitle>
+        <CardTitle className="text-base">Recently Created</CardTitle>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/sops" className="text-xs text-muted-foreground hover:text-foreground">
             View all <ArrowRight className="w-3 h-3 ml-1" />
@@ -351,7 +343,7 @@ function RecentSOPsCard({
             )}
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border max-h-[280px] overflow-y-auto">
             {sops.map((sop) => (
               <Link
                 key={sop.id}
@@ -359,9 +351,7 @@ function RecentSOPsCard({
                 className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
               >
                 <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  {sop.isAIGenerated
-                    ? <Sparkles className="w-4 h-4 text-purple-500" />
-                    : <FileText className="w-4 h-4 text-muted-foreground" />}
+                  <FileText className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{sop.title}</p>
@@ -401,7 +391,6 @@ function PendingApprovalsCard({ sops, loading }: { sops: PendingSOP[]; loading: 
     <Card className="border-orange-100 dark:border-orange-900/50">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-base flex items-center gap-2">
-          <GitMerge className="w-4 h-4 text-orange-500" />
           Pending Approvals
           {sops.length > 0 && (
             <Badge className="text-[10px] bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-0 px-1.5">
@@ -467,8 +456,7 @@ function ActivityCard({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Activity className="w-4 h-4" />
+        <CardTitle className="text-base">
           {canViewAll ? "Org Activity" : "My Activity"}
         </CardTitle>
       </CardHeader>
@@ -480,7 +468,7 @@ function ActivityCard({
         ) : activity.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-6 px-4">No activity yet</p>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border max-h-[240px] overflow-y-auto">
             {activity.map((act) => (
               <div key={act.id} className="flex items-start gap-3 px-4 py-3">
                 <Avatar className="w-6 h-6 mt-0.5 shrink-0">
@@ -519,9 +507,7 @@ function AIStatsCard({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-purple-500" /> AI Usage
-        </CardTitle>
+        <CardTitle className="text-base">AI Usage</CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (

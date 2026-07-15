@@ -197,7 +197,7 @@ export function SOPDetailClient({ id }: { id: string }) {
         </Button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            {sop.isAIGenerated && <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs"><Sparkles className="w-3 h-3 mr-1" />AI Generated</Badge>}
+            {sop.isAIGenerated && <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs">AI Generated</Badge>}
             <Badge className={`text-xs ${STATUS_COLORS[sop.status]}`}>{STATUS_LABELS[sop.status]}</Badge>
             {sop.isFavorite && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
           </div>
@@ -339,19 +339,18 @@ export function SOPDetailClient({ id }: { id: string }) {
           <TabsList className="h-9 bg-transparent p-0 gap-0 flex-wrap">
             {/* Always-visible primary tabs */}
             {[
-              { value: "editor",           icon: FileText,         label: "Editor"          },
-              { value: "workflow",         icon: BookOpen,         label: "Workflow"        },
-              { value: "checklist",        icon: CheckSquare,      label: "Checklist"       },
-              { value: "responsibilities", icon: Users,            label: "Roles"           },
-              { value: "approval",         icon: GitMerge,         label: "Approval",       dot: sop.status === "REVIEW" },
-              { value: "assistant",        icon: MessageSquareMore,label: "AI Assistant"    },
-            ].map(({ value, icon: Icon, label, dot }) => (
+              { value: "editor",           label: "Editor"       },
+              { value: "workflow",         label: "Workflow"     },
+              { value: "checklist",        label: "Checklist"    },
+              { value: "responsibilities", label: "Roles"        },
+              { value: "approval",         label: "Approval",    dot: sop.status === "REVIEW" },
+              { value: "assistant",        label: "AI Assistant" },
+            ].map(({ value, label, dot }) => (
               <TabsTrigger
                 key={value}
                 value={value}
                 className="h-9 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs gap-1.5 px-3"
               >
-                <Icon className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{label}</span>
                 {dot && <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />}
               </TabsTrigger>
@@ -371,20 +370,19 @@ export function SOPDetailClient({ id }: { id: string }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-44">
               {[
-                { value: "safety",     icon: ShieldCheck,       label: "Safety"      },
-                { value: "resources",  icon: Package,           label: "Resources"   },
-                { value: "versions",   icon: History,           label: "Versions"    },
-                { value: "insights",   icon: Lightbulb,         label: "Insights"    },
-                { value: "comments",   icon: Users,             label: "Comments"    },
-                { value: "activity",   icon: Activity,          label: "Activity"    },
-                { value: "executions", icon: Play,              label: "Executions"  },
-              ].map(({ value, icon: Icon, label }) => (
+                { value: "safety",     label: "Safety"     },
+                { value: "resources",  label: "Resources"  },
+                { value: "versions",   label: "Versions"   },
+                { value: "insights",   label: "Insights"   },
+                { value: "comments",   label: "Comments"   },
+                { value: "activity",   label: "Activity"   },
+                { value: "executions", label: "Executions" },
+              ].map(({ value, label }) => (
                 <DropdownMenuItem
                   key={value}
                   onClick={() => setActiveTab(value)}
                   className={`gap-2 text-sm cursor-pointer ${activeTab === value ? "bg-accent" : ""}`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
                   {label}
                   {activeTab === value && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
                 </DropdownMenuItem>

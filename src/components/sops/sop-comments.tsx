@@ -17,7 +17,7 @@ interface Comment {
   replies: Comment[];
 }
 
-export function SOPComments({ sopId, comments: init, onRefresh }: { sopId: string; comments: Comment[]; onRefresh: () => void }) {
+export function SOPComments({ sopId, comments: init = [], onRefresh }: { sopId: string; comments?: Comment[]; onRefresh: () => void }) {
   const [content, setContent] = useState("");
   const [posting, setPosting] = useState(false);
 

@@ -152,7 +152,7 @@ export function SOPDetailV2({ id }: { id: string }) {
     <div className="flex flex-col h-full min-h-0">
 
       {/* ── Top bar ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-border shrink-0">
+      <div className="flex items-center justify-between px-3 py-3 md:px-6 border-b border-border shrink-0">
         <button onClick={() => router.push("/assistant")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to AI Assistant
         </button>
@@ -193,7 +193,7 @@ export function SOPDetailV2({ id }: { id: string }) {
       </div>
 
       {/* ── SOP title block ─────────────────────────────────────── */}
-      <div className="px-6 pt-4 pb-2 shrink-0">
+      <div className="px-3 pt-4 pb-2 md:px-6 shrink-0">
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           {sop.isAIGenerated && <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs">AI Generated</Badge>}
           {sop.industry && <Badge variant="outline" className="text-xs">{sop.industry}</Badge>}
@@ -220,7 +220,7 @@ export function SOPDetailV2({ id }: { id: string }) {
       </div>
 
       {/* ── Tab bar ─────────────────────────────────────────────── */}
-      <div className="px-6 border-b border-border shrink-0">
+      <div className="px-3 md:px-6 border-b border-border shrink-0 overflow-x-auto">
         <div className="flex gap-0">
           {TABS.map(({ id: tid, label, icon: Icon }) => (
             <button key={tid} onClick={() => setActiveTab(tid)}
@@ -242,12 +242,12 @@ export function SOPDetailV2({ id }: { id: string }) {
       {/* ── Body: main content + right panel ────────────────────── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Main content */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 min-w-0">
+        <div className="flex-1 overflow-y-auto px-3 py-4 md:px-6 min-w-0">
           <SOPAcknowledgementBanner sopId={id} sopStatus={sop.status} sopTitle={sop.title} />
 
           {activeTab === "workflow"  && <SOPWorkflow sopId={id} steps={sop.workflowSteps} onRefresh={fetchSOP} />}
           {activeTab === "checklist" && <SOPChecklist sopId={id} items={sop.checklistItems} onRefresh={fetchSOP} />}
-          {activeTab === "roles"     && <SOPResponsibilities sopId={id} responsibilities={sop.responsibilities} onRefresh={fetchSOP} />}
+          {activeTab === "roles"     && <SOPResponsibilities sopId={id} responsibilities={sop.responsibilities} sopStatus={sop.status} onRefresh={fetchSOP} />}
           {activeTab === "editor"    && <SOPEditor sop={sop} onUpdate={fetchSOP} />}
           {activeTab === "activity"  && <SOPActivityLog activities={sop.activities} />}
           {activeTab === "comments"  && <SOPComments sopId={id} comments={sop.comments as never} onRefresh={fetchSOP} />}
@@ -260,8 +260,8 @@ export function SOPDetailV2({ id }: { id: string }) {
           {activeTab === "assistant" && <SOPAIAssistant sopId={id} />}
         </div>
 
-        {/* Right side panel */}
-        <div className="w-72 shrink-0 border-l border-border overflow-y-auto">
+        {/* Right side panel — hidden on mobile */}
+        <div className="hidden lg:block w-72 shrink-0 border-l border-border overflow-y-auto">
           {/* Side tab switcher */}
           <div className="flex border-b border-border">
             {SIDE_TABS.map((st) => (
@@ -346,7 +346,7 @@ export function SOPDetailV2({ id }: { id: string }) {
       {/* ── Bottom action bar ───────────────────────────────────── */}
       <div className="border-t border-border bg-background shrink-0">
         {/* Action buttons */}
-        <div className="flex items-center gap-2 px-6 py-3 border-b border-border">
+        <div className="flex items-center gap-2 px-3 py-3 md:px-6 border-b border-border flex-wrap">
           <Button
             onClick={handlePublish}
             disabled={publishing || sop.status === "PUBLISHED" || sop.status === "REVIEW"}
@@ -384,7 +384,7 @@ export function SOPDetailV2({ id }: { id: string }) {
         </div>
 
         {/* AI chat bar */}
-        <div className="px-6 py-3">
+        <div className="px-3 py-3 md:px-6">
           <div className="flex items-center gap-2 bg-muted/50 border border-border rounded-xl px-4 py-2.5">
             <input
               value={aiMsg}

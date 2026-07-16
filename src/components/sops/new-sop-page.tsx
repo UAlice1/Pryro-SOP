@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { SopToast } from "@/lib/toast";
+import { SopToast, toastError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -112,7 +112,7 @@ export function NewSOPPage() {
 
   const onSaveDraft = async () => {
     const data = getValues();
-    if (!data.title || data.title.length < 2) { toast.error("Please enter a SOP title"); return; }
+    if (!data.title || data.title.length < 2) { toastError("Please enter a SOP title"); return; }
     setSavingDraft(true);
     try {
       const id = await buildPayload(data, false);
@@ -127,7 +127,7 @@ export function NewSOPPage() {
     setLoading(true);
     try {
       const id = await buildPayload(data, true);
-      SopToast.aiGenerated(payload.title as string ?? data.title);
+      SopToast.aiGenerated(data.title);
       router.push(`/sops/${id}`);
     } catch (err: unknown) {
       SopToast.error("Generate SOP", err instanceof Error ? err.message : undefined);
@@ -210,7 +210,7 @@ export function NewSOPPage() {
               </div>
 
               {/* Department + Company */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="department" className="text-sm font-medium">Department</Label>
                   <Input id="department" placeholder="e.g. Human Resources" {...register("department")} />

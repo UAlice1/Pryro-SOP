@@ -189,7 +189,7 @@ export function SOPDetailClient({ id }: { id: string }) {
   if (!sop) return null;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4 px-2 md:px-0">
       {/* Header */}
       <div className="flex items-start gap-3">
         <Button variant="ghost" size="icon" className="mt-0.5 shrink-0" onClick={() => router.push("/sops")}>

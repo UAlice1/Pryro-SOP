@@ -11,7 +11,7 @@ export default async function SettingsPage({
 }) {
   const { tab } = await searchParams;
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-6">
+    <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
       <PageTransition>
         <SettingsClient defaultTab={tab} />
       </PageTransition>

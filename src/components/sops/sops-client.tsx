@@ -127,15 +127,15 @@ export function SOPsClient() {
               : "All SOPs";
 
   return (
-    <div className="space-y-5 max-w-6xl mx-auto">
+    <div className="space-y-4 max-w-6xl mx-auto">
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{title}</h1>
           <p className="text-muted-foreground text-sm">{total} SOP{total !== 1 ? "s" : ""}</p>
         </div>
-        <Button asChild>
-          <Link href="/assistant"><Plus className="w-4 h-4 mr-2" />New SOP</Link>
+        <Button asChild size="sm">
+          <Link href="/sops/new"><Plus className="w-4 h-4 mr-1.5" />New SOP</Link>
         </Button>
       </div>
 
@@ -143,7 +143,7 @@ export function SOPsClient() {
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           {/* Search */}
-          <div className="relative flex-1 max-w-sm">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} placeholder="Search SOPs…" className="pl-9 h-9" />
             {search && (

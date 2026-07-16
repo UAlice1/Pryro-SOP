@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     "@prisma/adapter-neon",
     "@neondatabase/serverless",
     "bcryptjs",
+    "pg",
   ],
 };
 

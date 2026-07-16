@@ -56,16 +56,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      // For Google OAuth: sync profile image and mark email verified
+      // For Google OAuth: set MANAGER role for new users, sync profile data
       if (account?.provider === "google" && user.email) {
+        const existing = await db.user.findUnique({
+          where: { email: user.email },
+          select: { id: true, role: true, emailVerified: true },
+        }).catch(() => null);
+
+        // PrismaAdapter creates the user before this callback on first sign-in.
+        // If no emailVerified yet, it's a brand-new Google user → set MANAGER.
+        const isNewUser = !existing?.emailVerified;
         await db.user.update({
           where: { email: user.email },
           data: {
             emailVerified: new Date(),
-            image: profile?.picture as string ?? user.image ?? undefined,
+            image: (profile?.picture as string) ?? user.image ?? undefined,
             name: user.name ?? undefined,
+            ...(isNewUser || existing?.role === "EMPLOYEE"
+              ? { role: "MANAGER" }
+              : {}),
           },
-        }).catch(() => null); // ignore if user doesn't exist yet (adapter creates them)
+        }).catch(() => null);
       }
       return true;
     },

@@ -248,7 +248,10 @@ export function SOPDetailV2({ id }: { id: string }) {
           {activeTab === "workflow"  && <SOPWorkflow sopId={id} steps={sop.workflowSteps} onRefresh={fetchSOP} />}
           {activeTab === "checklist" && <SOPChecklist sopId={id} items={sop.checklistItems} onRefresh={fetchSOP} />}
           {activeTab === "roles"     && <SOPResponsibilities sopId={id} responsibilities={sop.responsibilities} sopStatus={sop.status} onRefresh={fetchSOP} />}
-          {activeTab === "editor"    && <SOPEditor sop={sop} onUpdate={fetchSOP} />}
+          {activeTab === "editor"    && <SOPEditor sop={sop} onUpdate={fetchSOP} onSaveSections={async (sections) => {
+            await fetch(`/api/sops/${id}/sections`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sections }) });
+            fetchSOP();
+          }} />}
           {activeTab === "activity"  && <SOPActivityLog activities={sop.activities} />}
           {activeTab === "comments"  && <SOPComments sopId={id} comments={sop.comments as never} onRefresh={fetchSOP} />}
           {activeTab === "approval"  && <SOPApproval sopId={id} sop={sop} onRefresh={fetchSOP} />}

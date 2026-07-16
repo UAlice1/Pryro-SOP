@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 interface Responsibility {
   id:       string;
   role:     string;
-  roleName: string | null;
+  roleName?: string | null;
 }
 
 interface InviteResult {

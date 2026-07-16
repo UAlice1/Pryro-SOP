@@ -255,10 +255,10 @@ export function SOPDetailV2({ id }: { id: string }) {
           {activeTab === "activity"  && <SOPActivityLog activities={sop.activities} />}
           {activeTab === "comments"  && <SOPComments sopId={id} comments={sop.comments as never} onRefresh={fetchSOP} />}
           {activeTab === "approval"  && <SOPApproval sopId={id} sopStatus={sop.status} authorId={sop.authorId} currentUserId={(session?.user as { id?: string })?.id ?? ""} canApprove={["SUPER_ADMIN","ORG_ADMIN","MANAGER","APPROVER"].includes(userRole)} approvals={sop.approvals ?? []} onRefresh={fetchSOP} />}
-          {activeTab === "versions"  && <SOPVersions sopId={id} onRefresh={fetchSOP} />}
+          {activeTab === "versions"  && <SOPVersions sopId={id} currentVersion={sop.version} sopStatus={sop.status} onRefresh={fetchSOP} />}
           {activeTab === "insights"  && <SOPInsights sopId={id} />}
-          {activeTab === "safety"    && <SOPSafety sopId={id} sections={sop.sections} sopStatus={sop.status} onRefresh={fetchSOP} />}
-          {activeTab === "resources" && <SOPResources sopId={id} resources={sop.resources} onRefresh={fetchSOP} />}
+          {activeTab === "safety"    && <SOPSafety sopId={id} sopStatus={sop.status} existingSafetyContent={sop.sections.find((s) => s.type === "safety")?.content} onRefresh={fetchSOP} />}
+          {activeTab === "resources" && <SOPResources sopId={id} resources={sop.resources} sopStatus={sop.status} onRefresh={fetchSOP} />}
           {activeTab === "executions"&& <SOPInstancesList sopId={id} />}
           {activeTab === "assistant" && <SOPAIAssistant sopId={id} />}
         </div>

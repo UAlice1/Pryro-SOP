@@ -41,7 +41,29 @@ export default function RootLayout({
         >
           <Providers>
             {children}
-            <Toaster richColors position="top-right" />
+            <Toaster
+              richColors
+              position="top-right"
+              expand={true}
+              closeButton
+              theme="dark"
+              toastOptions={{
+                style: {
+                  background: "#0d0d0d",
+                  color: "#ffffff",
+                  border: "1px solid #2f2f2f",
+                  borderRadius: "10px",
+                },
+                classNames: {
+                  title: "text-white font-medium text-sm",
+                  description: "text-zinc-400 text-xs",
+                  closeButton: "bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white",
+                  actionButton: "bg-white text-black text-xs font-medium",
+                  cancelButton: "bg-zinc-800 text-zinc-300 text-xs",
+                },
+                duration: 4000,
+              }}
+            />
           </Providers>
         </ThemeProvider>
       </body>

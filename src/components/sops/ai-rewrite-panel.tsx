@@ -505,7 +505,7 @@ function PreviewContent({ preview }: { preview: { action: AIAction; data: Rewrit
       <div className="max-h-48 overflow-y-auto space-y-2 text-xs">
         {data.workflow?.map((step) => (
           <div key={step.stepNumber} className="flex items-start gap-2.5">
-            <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold shrink-0">{step.stepNumber}</div>
+            <div className="w-5 h-5 rounded-full bg-foreground text-background flex items-center justify-center text-[10px] font-bold shrink-0">{step.stepNumber}</div>
             <div>
               <p className="font-medium">{step.title} {step.role && <span className="text-muted-foreground font-normal">— {step.role}</span>}</p>
               {step.duration && <p className="text-muted-foreground">{step.duration}</p>}

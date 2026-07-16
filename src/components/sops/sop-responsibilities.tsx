@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { toast } from "sonner";
@@ -43,7 +43,7 @@ export function SOPResponsibilities({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ responsibilities: items }),
       });
-      if (res.ok) { toast.success("Responsibilities saved"); onRefresh(); }
+      if (res.ok) { toast.success("Roles saved", { description: "Responsibilities have been updated." }); onRefresh(); }
       else toast.error("Failed to save");
     } finally { setSaving(false); }
   };
@@ -128,7 +128,7 @@ export function SOPResponsibilities({
                   key={i}
                   className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border"
                 >
-                  <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
                     {i + 1}
                   </div>
                   <div className="flex-1 space-y-2">

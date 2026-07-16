@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { STATUS_LABELS, STATUS_COLORS, timeAgo, truncate } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
-import { toast } from "sonner";
+import { SopToast } from "@/lib/toast";
 
 interface SOP {
   id: string;
@@ -60,6 +60,8 @@ export function SOPsClient() {
   const [categories,  setCategories]  = useState<FilterOption[]>([]);
   const [allTags,     setAllTags]     = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
 
   const debouncedSearch = useDebounce(search, 350);
 
@@ -81,13 +83,15 @@ export function SOPsClient() {
   const fetchSops = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (debouncedSearch)       params.set("search",       debouncedSearch);
+    if (debouncedSearch)             params.set("search",             debouncedSearch);
     if (filters.status)              params.set("status",              filters.status);
-    if (filters.departmentId)         params.set("departmentId",         filters.departmentId);
-    if (filters.categoryId)           params.set("categoryId",           filters.categoryId);
-    if (filters.tag)                  params.set("tag",                  filters.tag);
-    if (filters.complianceFramework)  params.set("complianceFramework",  filters.complianceFramework);
-    if (filterParam === "archived") params.set("archived", "true");
+    if (filters.departmentId)        params.set("departmentId",        filters.departmentId);
+    if (filters.categoryId)          params.set("categoryId",          filters.categoryId);
+    if (filters.tag)                 params.set("tag",                 filters.tag);
+    if (filters.complianceFramework) params.set("complianceFramework", filters.complianceFramework);
+    if (filterParam === "archived")  params.set("archived", "true");
+    params.set("page",  String(currentPage));
+    params.set("limit", String(PAGE_SIZE));
 
     const res  = await fetch(`/api/sops?${params}`);
     const data = await res.json();
@@ -100,20 +104,21 @@ export function SOPsClient() {
     setTotal(filterParam === "favorites" ? items.length : (data.total ?? 0));
 
     setLoading(false);
-  }, [debouncedSearch, filters, filterParam]);
+  }, [debouncedSearch, filters, filterParam, currentPage]);
 
   useEffect(() => { fetchSops(); }, [fetchSops]);
 
-  const handleDuplicate      = async (id: string) => { const r = await fetch(`/api/sops/${id}/duplicate`, { method: "POST" }); if (r.ok) { toast.success("Duplicated"); fetchSops(); } else toast.error("Failed"); };
-  const handleDelete         = async (id: string) => { if (!confirm("Delete permanently?")) return; const r = await fetch(`/api/sops/${id}`, { method: "DELETE" }); if (r.ok) { toast.success("Deleted"); fetchSops(); } else toast.error("Failed"); };
-  const handleArchive        = async (id: string, isArchived: boolean) => { const r = await fetch(`/api/sops/${id}/archive`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ archive: !isArchived }) }); if (r.ok) { toast.success(isArchived ? "Restored" : "Archived"); fetchSops(); } else toast.error("Failed"); };
+  const handleDuplicate      = async (id: string) => { const r = await fetch(`/api/sops/${id}/duplicate`, { method: "POST" }); if (r.ok) { SopToast.duplicated("SOP"); fetchSops(); } else SopToast.error("Duplicate"); };
+  const handleDelete         = async (id: string) => { if (!confirm("Delete permanently?")) return; const r = await fetch(`/api/sops/${id}`, { method: "DELETE" }); if (r.ok) { SopToast.deleted("SOP"); fetchSops(); } else SopToast.error("Delete"); };
+  const handleArchive        = async (id: string, isArchived: boolean) => { const r = await fetch(`/api/sops/${id}/archive`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ archive: !isArchived }) }); if (r.ok) { isArchived ? SopToast.restored("SOP") : SopToast.archived("SOP"); fetchSops(); } else SopToast.error("Archive"); };
   const handleToggleFavorite = async (id: string, cur: boolean) => { const r = await fetch(`/api/sops/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isFavorite: !cur }) }); if (r.ok) fetchSops(); };
 
-  const setFilter = (key: keyof typeof EMPTY_FILTERS, value: string) =>
+  const setFilter = (key: keyof typeof EMPTY_FILTERS, value: string) => {
+    setCurrentPage(1);
     setFilters((prev) => ({ ...prev, [key]: value }));
-
+  };
   const clearFilter = (key: keyof typeof EMPTY_FILTERS) => setFilter(key, "");
-  const clearAll    = () => setFilters(EMPTY_FILTERS);
+  const clearAll    = () => { setCurrentPage(1); setFilters(EMPTY_FILTERS); };
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
@@ -140,7 +145,7 @@ export function SOPsClient() {
           {/* Search */}
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search SOPs…" className="pl-9 h-9" />
+            <Input value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} placeholder="Search SOPs…" className="pl-9 h-9" />
             {search && (
               <button className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setSearch("")}>
                 <X className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
@@ -429,6 +434,43 @@ export function SOPsClient() {
             ))}
           </div>
         </AnimatePresence>
+      )}
+
+      {/* Pagination */}
+      {!loading && total > PAGE_SIZE && (
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-muted-foreground">
+            Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, total)}–{Math.min(currentPage * PAGE_SIZE, total)} of {total} SOPs
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" className="h-8 px-3 text-xs"
+              disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
+              Previous
+            </Button>
+            {Array.from({ length: Math.ceil(total / PAGE_SIZE) }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === Math.ceil(total / PAGE_SIZE) || Math.abs(p - currentPage) <= 1)
+              .reduce<(number | "...")[]>((acc, p, i, arr) => {
+                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("...");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                p === "..." ? (
+                  <span key={`e-${i}`} className="px-2 text-xs text-muted-foreground">…</span>
+                ) : (
+                  <Button key={p} variant={currentPage === p ? "default" : "outline"}
+                    size="sm" className="h-8 w-8 p-0 text-xs"
+                    onClick={() => setCurrentPage(p as number)}>
+                    {p}
+                  </Button>
+                )
+              )}
+            <Button variant="outline" size="sm" className="h-8 px-3 text-xs"
+              disabled={currentPage >= Math.ceil(total / PAGE_SIZE)} onClick={() => setCurrentPage((p) => p + 1)}>
+              Next
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

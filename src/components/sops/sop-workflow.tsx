@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -77,8 +77,8 @@ export function SOPWorkflow({
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ steps }),
       });
-      if (res.ok) { toast.success("Workflow saved"); onRefresh(); }
-      else toast.error("Failed to save workflow");
+      if (res.ok) { toast.success("Workflow saved", { description: "Your workflow steps have been updated." }); onRefresh(); }
+      else toast.error("Failed to save workflow", { description: "Please try again." });
     } finally {
       setSaving(false);
     }
@@ -102,7 +102,7 @@ export function SOPWorkflow({
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 {/* Step number bubble */}
-                <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0 mt-1">
+                <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold shrink-0 mt-1">
                   {step.stepNumber}
                 </div>
 

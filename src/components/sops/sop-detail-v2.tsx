@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  ArrowLeft, Sparkles, Star, Copy, Archive, Trash2,
+  ArrowLeft, Star, Copy, Archive, Trash2,
   FileText, CheckSquare, Users, Activity, MessageSquareMore,
   History, Lightbulb, Play, UserPlus, FileDown, ChevronDown,
   Loader2, MoreHorizontal, GitMerge, Shield, Package,
@@ -195,7 +195,7 @@ export function SOPDetailV2({ id }: { id: string }) {
       {/* ── SOP title block ─────────────────────────────────────── */}
       <div className="px-6 pt-4 pb-2 shrink-0">
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          {sop.isAIGenerated && <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs gap-1"><Sparkles className="w-3 h-3" />AI Generated</Badge>}
+          {sop.isAIGenerated && <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs">AI Generated</Badge>}
           {sop.industry && <Badge variant="outline" className="text-xs">{sop.industry}</Badge>}
           {sop.complianceFramework && <Badge variant="outline" className="text-xs">{sop.complianceFramework}</Badge>}
         </div>
@@ -386,7 +386,6 @@ export function SOPDetailV2({ id }: { id: string }) {
         {/* AI chat bar */}
         <div className="px-6 py-3">
           <div className="flex items-center gap-2 bg-muted/50 border border-border rounded-xl px-4 py-2.5">
-            <Sparkles className="w-4 h-4 text-muted-foreground shrink-0" />
             <input
               value={aiMsg}
               onChange={(e) => setAiMsg(e.target.value)}
@@ -408,7 +407,7 @@ export function SOPDetailV2({ id }: { id: string }) {
               ))}
               <button
                 onClick={() => { if (aiMsg.trim()) { setActiveTab("assistant"); setAiMsg(""); } }}
-                className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity"
+                className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-90 transition-opacity"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>

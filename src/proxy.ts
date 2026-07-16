@@ -26,16 +26,20 @@ const ORG_EXEMPT_API = [
   "/api/auth",
   "/api/register",
   "/api/setup",
-  "/api/assistant",      // AI assistant — user-level
-  "/api/chat",           // AI chat transport fallback — user-level
-  "/api/ai",             // All AI routes — user-level (use own API key)
-  "/api/generate-sop",   // AI SOP generation — user-level
-  "/api/sops",           // SOP CRUD — user's own SOPs work without org
-  "/api/dashboard",      // Dashboard handles no-org gracefully
-  "/api/tags",           // Returns empty array if no org
-  "/api/admin/org",      // Admin creates/manages org
-  "/api/profile",        // User profile — user-level
-  "/api/ai/settings",    // AI settings — user-level
+  "/api/assistant",
+  "/api/chat",
+  "/api/ai",
+  "/api/generate-sop",
+  "/api/sops",
+  "/api/dashboard",
+  "/api/tags",
+  "/api/admin/org",
+  "/api/profile",
+  "/api/user",
+  "/api/ai/settings",
+  "/api/categories",
+  "/api/departments",
+  "/api/notifications",
 ];
 
 export default async function proxy(req: NextRequest) {

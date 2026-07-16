@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -30,8 +30,8 @@ export function SOPComments({ sopId, comments: init = [], onRefresh }: { sopId: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
-      if (res.ok) { setContent(""); onRefresh(); toast.success("Comment posted"); }
-      else toast.error("Failed to post comment");
+      if (res.ok) { setContent(""); onRefresh(); toast.success("Comment posted", { description: "Your comment has been added." }); }
+      else toast.error("Failed to post comment", { description: "Please try again." });
     } finally { setPosting(false); }
   };
 

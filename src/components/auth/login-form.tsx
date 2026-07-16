@@ -7,6 +7,7 @@ import { z } from "zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { AuthToast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,13 +40,13 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        toast.error("Invalid email or password");
+        toast.error("Invalid email or password", { description: "Please check your credentials and try again." });
       } else {
         router.push("/sops/new");
         router.refresh();
       }
     } catch {
-      toast.error("Something went wrong");
+        toast.error("Something went wrong", { description: "Please try again later." });
     } finally {
       setLoading(false);
     }

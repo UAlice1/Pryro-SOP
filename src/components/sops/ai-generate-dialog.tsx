@@ -286,7 +286,7 @@ function GeneratedSOPPreview({ sop }: { sop: GeneratedSOP }) {
               <div className="space-y-2">
                 {sop.workflow.map((s) => (
                   <div key={s.stepNumber} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
-                    <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold shrink-0">
                       {s.stepNumber}
                     </div>
                     <div>

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
+import { AuthToast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +47,7 @@ export function RegisterForm() {
 
       if (!res.ok) {
         const err = await res.json() as { message?: string };
-        toast.error(err.message ?? "Registration failed");
+        toast.error(err.message ?? "Registration failed", { description: "Please check your details and try again." });
         return;
       }
 
@@ -57,10 +58,10 @@ export function RegisterForm() {
       });
 
       if (result?.error) {
-        toast.success("Account created! Please sign in.");
+        toast.success("Account created! Please sign in.", { description: "Your account is ready. Sign in to get started." });
         router.push("/login");
       } else {
-        toast.success("Welcome to Pryro SOP!");
+        AuthToast.welcome("Pryro SOP");
         router.push("/sops/new");
         router.refresh();
       }

@@ -230,13 +230,6 @@ export function DashboardClient({ userName }: { userName: string }) {
             href="/sops/new"
           />
         )}
-        <QuickAction
-          icon={<BookOpen className="w-4 h-4 text-green-500" />}
-          bg="bg-green-50 dark:bg-green-950/30"
-          title="Browse Library"
-          desc="Search all SOPs in your org"
-          href="/sops"
-        />
         {canApprove && (
           <QuickAction
             icon={<ShieldCheck className="w-4 h-4 text-orange-500" />}

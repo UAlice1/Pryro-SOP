@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { toast } from "sonner";
@@ -70,7 +70,7 @@ export function SOPResources({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ resources: items }),
       });
-      if (res.ok) { toast.success("Resources saved"); onRefresh(); }
+      if (res.ok) { toast.success("Resources saved", { description: "Required resources have been updated." }); onRefresh(); }
       else toast.error("Failed to save");
     } finally { setSaving(false); }
   };

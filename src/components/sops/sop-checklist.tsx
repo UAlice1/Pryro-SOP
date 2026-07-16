@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -67,8 +67,8 @@ export function SOPChecklist({
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ items }),
       });
-      if (res.ok) { toast.success("Checklist saved"); onRefresh(); }
-      else toast.error("Failed to save checklist");
+      if (res.ok) { toast.success("Checklist saved", { description: "Your checklist has been updated." }); onRefresh(); }
+      else toast.error("Failed to save checklist", { description: "Please try again." });
     } finally {
       setSaving(false);
     }

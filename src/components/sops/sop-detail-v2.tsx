@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -254,7 +255,7 @@ export function SOPDetailV2({ id }: { id: string }) {
           }} />}
           {activeTab === "activity"  && <SOPActivityLog activities={sop.activities} />}
           {activeTab === "comments"  && <SOPComments sopId={id} comments={sop.comments as never} onRefresh={fetchSOP} />}
-          {activeTab === "approval"  && <SOPApproval sopId={id} sop={sop} onRefresh={fetchSOP} />}
+          {activeTab === "approval"  && <SOPApproval sopId={id} sopStatus={sop.status} authorId={sop.authorId} currentUserId={(session?.user as { id?: string })?.id ?? ""} canApprove={["SUPER_ADMIN","ORG_ADMIN","MANAGER","APPROVER"].includes(userRole)} approvals={sop.approvals ?? []} onRefresh={fetchSOP} />}
           {activeTab === "versions"  && <SOPVersions sopId={id} onRefresh={fetchSOP} />}
           {activeTab === "insights"  && <SOPInsights sopId={id} />}
           {activeTab === "safety"    && <SOPSafety sopId={id} sections={sop.sections} sopStatus={sop.status} onRefresh={fetchSOP} />}

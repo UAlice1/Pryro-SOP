@@ -53,20 +53,33 @@ export default async function proxy(req: NextRequest) {
   // ── Read JWT directly from cookie (Edge-safe, no DB call) ─────────────────
   const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
 
-  const token = await getToken({
+  // NextAuth v5 uses different cookie names — try both to handle all environments
+  let token = await getToken({
     req,
     secret,
-    // In @auth/core (NextAuth v5), the cookie name IS the salt used for
-    // JWT decryption — both must match what NextAuth set when issuing the token
-    cookieName:
-      process.env.NODE_ENV === "production"
-        ? "__Secure-authjs.session-token"
-        : "authjs.session-token",
-    salt:
-      process.env.NODE_ENV === "production"
-        ? "__Secure-authjs.session-token"
-        : "authjs.session-token",
+    cookieName: "__Secure-authjs.session-token",
+    salt:       "__Secure-authjs.session-token",
   }).catch(() => null);
+
+  // Fallback to non-secure cookie (localhost / HTTP)
+  if (!token) {
+    token = await getToken({
+      req,
+      secret,
+      cookieName: "authjs.session-token",
+      salt:       "authjs.session-token",
+    }).catch(() => null);
+  }
+
+  // Fallback to legacy NextAuth v4 cookie name
+  if (!token) {
+    token = await getToken({
+      req,
+      secret,
+      cookieName: "next-auth.session-token",
+      salt:       "next-auth.session-token",
+    }).catch(() => null);
+  }
 
   const isAuthenticated = !!token;
   const role  = (token?.role  as string | undefined) ?? "EMPLOYEE";

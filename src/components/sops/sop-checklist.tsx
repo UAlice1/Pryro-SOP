@@ -86,7 +86,7 @@ export function SOPChecklist({
         </Button>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-28rem)] pr-1">
         {items.map((item, i) => {
           const priorityConf = PRIORITY_OPTIONS.find((p) => p.value === item.priority);
           return (

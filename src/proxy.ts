@@ -53,11 +53,16 @@ export default async function proxy(req: NextRequest) {
   // ── Read JWT directly from cookie (Edge-safe, no DB call) ─────────────────
   const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
 
-  // Let getToken auto-detect the correct cookie name for the environment.
-  // On HTTPS (production) it uses __Secure-authjs.session-token,
-  // on HTTP (localhost) it uses authjs.session-token.
-  // Passing explicit cookieName/salt causes mismatch issues with NextAuth v5.
-  const token = await getToken({ req, secret }).catch(() => null);
+  // NextAuth v5 uses "authjs.session-token" (HTTP) or "__Secure-authjs.session-token" (HTTPS)
+  const isSecure = req.url.startsWith("https://");
+  const cookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
+
+  const token = await getToken({
+    req,
+    secret,
+    cookieName,
+    salt: cookieName,
+  }).catch(() => null);
 
   const isAuthenticated = !!token;
   const role  = (token?.role  as string | undefined) ?? "EMPLOYEE";

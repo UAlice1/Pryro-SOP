@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, ArrowLeft, FileText } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
 
 const schema = z.object({
   title:       z.string().min(2, "Title is required"),
@@ -140,9 +140,6 @@ export function NewSOPPage() {
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-3 py-1.5">
-            <ArrowLeft className="w-3.5 h-3.5" /> Back
-          </button>
           <h1 className="text-xl font-semibold">New SOP</h1>
         </div>
       </div>

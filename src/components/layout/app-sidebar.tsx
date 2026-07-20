@@ -21,13 +21,13 @@ import {
 import { CommandPalette } from "@/components/command-palette";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { User as NextAuthUser } from "next-auth";
+import { useUIStore } from "@/lib/stores/ui-store";
 
 /* ─── Nav items ─────────────────────────────────────────────────────────── */
 
 const BASE_NAV = [
   { href: "/sops/new",  label: "New SOP",  icon: Plus     },
   { href: "/sops",      label: "My SOPs",  icon: FileText },
-  { href: "/settings",  label: "Settings", icon: Settings },
 ];
 
 function NavItem({
@@ -283,10 +283,22 @@ function CollapsedSidebar({ user, onExpand }: { user: NextAuthUser; onExpand?: (
 /* ─── Desktop sidebar ───────────────────────────────────────────────────── */
 
 export function AppSidebar({ user }: { user: NextAuthUser }) {
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const reduced = useReducedMotion();
+  const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
+  // Local collapsed state synced with store
+  const [collapsed, setCollapsed] = useState(false);
+
+  // When store says collapse (AI panel opened), collapse sidebar
+  useEffect(() => {
+    setCollapsed(sidebarCollapsed);
+  }, [sidebarCollapsed]);
+
+  const handleCollapse = (v: boolean) => {
+    setCollapsed(v);
+    setSidebarCollapsed(v);
+  };
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
   useEffect(() => {
@@ -319,10 +331,9 @@ export function AppSidebar({ user }: { user: NextAuthUser }) {
         }}
       >
         {collapsed ? (
-          /* Collapsed strip — icons + avatar at bottom */
-          <CollapsedSidebar user={user} onExpand={() => setCollapsed(false)} />
+          <CollapsedSidebar user={user} onExpand={() => handleCollapse(false)} />
         ) : (
-          <AppSidebarContent user={user} onCollapse={() => setCollapsed(true)} />
+          <AppSidebarContent user={user} onCollapse={() => handleCollapse(true)} />
         )}
       </aside>
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { FileText, Plus, Settings, Search, LayoutDashboard } from "lucide-react";
+import { FileText, Plus, Search, LayoutDashboard } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 
 interface CommandPaletteProps {
@@ -54,7 +54,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const staticItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
     { label: "New SOP", icon: Plus, href: "/sops/new" },
-    { label: "Settings", icon: Settings, href: "/settings" },
   ];
 
   return (

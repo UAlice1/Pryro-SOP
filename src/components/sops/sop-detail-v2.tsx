@@ -36,6 +36,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useUIStore } from "@/lib/stores/ui-store";
 
 interface SOPData {
   id: string; title: string; description: string | null;
@@ -82,6 +83,7 @@ export function SOPDetailV2({ id }: { id: string }) {
   const canDelete = ["SUPER_ADMIN", "ORG_ADMIN", "MANAGER"].includes(userRole);
   const canInvite = ["SUPER_ADMIN", "ORG_ADMIN", "MANAGER"].includes(userRole);
 
+  const { setSidebarCollapsed } = useUIStore();
   const [sop,        setSop]       = useState<SOPData | null>(null);
   const [loading,    setLoading]   = useState(true);
   const [saving,     setSaving]    = useState(false);
@@ -91,6 +93,14 @@ export function SOPDetailV2({ id }: { id: string }) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [aiMsg,      setAiMsg]     = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+
+  // Collapse sidebar when AI panel opens, restore on close/unmount
+  useEffect(() => {
+    setSidebarCollapsed(aiPanelOpen);
+  }, [aiPanelOpen, setSidebarCollapsed]);
+
+  useEffect(() => () => { setSidebarCollapsed(false); }, [setSidebarCollapsed]);
 
   const fetchSOP = useCallback(async () => {
     const res = await fetch(`/api/sops/${id}`);
@@ -164,38 +174,33 @@ export function SOPDetailV2({ id }: { id: string }) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground">
-                <Star className="w-3.5 h-3.5" /> Edit <ChevronDown className="w-3 h-3 opacity-70" />
+                <FileDown className="w-3.5 h-3.5" /> Download <ChevronDown className="w-3 h-3 opacity-70" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setActiveTab("editor")}>Edit Details</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("html")}>Export HTML</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("docx")}>Export DOCX</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("md")}>Export Markdown</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("pdf")}>PDF</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("html")}>HTML</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("docx")}>Word (DOCX)</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("md")}>Markdown</DropdownMenuItem>
               <DropdownMenuSeparator />
               {canDelete && <DropdownMenuItem onClick={handleDelete} className="text-destructive">Delete SOP</DropdownMenuItem>}
             </DropdownMenuContent>
           </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => router.push(`/sops/${id}/execute/new`)}>
-                <Play className="w-4 h-4 mr-2" /> Execute SOP
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveTab("versions")}>
-                <History className="w-4 h-4 mr-2" /> Version History
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant={aiPanelOpen ? "default" : "outline"}
+            size="sm"
+            className={cn("gap-1.5", aiPanelOpen && "bg-primary text-primary-foreground border-primary")}
+            onClick={() => setAiPanelOpen((v) => !v)}
+          >
+            <Lightbulb className="w-3.5 h-3.5" /> AI
+          </Button>
         </div>
       </div>
 
       {/* ── SOP title block ─────────────────────────────────────── */}
       <div className="px-3 pt-4 pb-2 md:px-6 shrink-0">
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          {sop.isAIGenerated && <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs">AI Generated</Badge>}
+          {sop.isAIGenerated && <Badge variant="secondary" className="text-xs">AI Generated</Badge>}
           {sop.industry && <Badge variant="outline" className="text-xs">{sop.industry}</Badge>}
           {sop.complianceFramework && <Badge variant="outline" className="text-xs">{sop.complianceFramework}</Badge>}
         </div>
@@ -263,9 +268,30 @@ export function SOPDetailV2({ id }: { id: string }) {
           {activeTab === "assistant" && <SOPAIAssistant sopId={id} />}
         </div>
 
-        {/* Right side panel — hidden on mobile */}
-        <div className="hidden lg:block w-72 shrink-0 border-l border-border overflow-y-auto">
-          {/* Side tab switcher */}
+        {/* Right side panel — shows Details/AI Insights OR AI Assistant */}
+        <div className={cn("hidden lg:flex flex-col shrink-0 border-l border-border overflow-y-auto transition-all duration-300", aiPanelOpen ? "w-96" : "w-72")}>
+          {aiPanelOpen ? (
+            /* AI Assistant replaces the details panel */
+            <>
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">AI Assistant</span>
+                </div>
+                <button
+                  onClick={() => setAiPanelOpen(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
+                  aria-label="Close AI panel"
+                >
+                  <Plus className="w-4 h-4 rotate-45" />
+                </button>
+              </div>
+              <div className="p-4">
+                <SOPAIAssistant sopId={id} />
+              </div>
+            </>
+          ) : (
+            /* Normal Details / AI Insights panel */
+            <>          {/* Side tab switcher */}
           <div className="flex border-b border-border">
             {SIDE_TABS.map((st) => (
               <button key={st.id} onClick={() => setSideTab(st.id)}
@@ -343,80 +369,20 @@ export function SOPDetailV2({ id }: { id: string }) {
               <SOPInsights sopId={id} />
             </div>
           )}
+          </>
+          )}
         </div>
+
       </div>
 
       {/* ── Bottom action bar ───────────────────────────────────── */}
       <div className="border-t border-border bg-background shrink-0">
-        {/* Action buttons */}
-        <div className="flex items-center gap-2 px-3 py-3 md:px-6 border-b border-border flex-wrap">
-          <Button
-            onClick={handlePublish}
-            disabled={publishing || sop.status === "PUBLISHED" || sop.status === "REVIEW"}
-            className="gap-1.5 bg-primary text-primary-foreground"
-            size="sm"
-          >
-            {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Globe className="w-3.5 h-3.5" />}
-            {publishLabel}
-          </Button>
-
+        <div className="flex items-center gap-2 px-3 py-3 md:px-6 flex-wrap">
           {canInvite && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setInviteOpen(true)}>
               <UserPlus className="w-3.5 h-3.5" /> Invite Staff
             </Button>
           )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5" disabled={!!exporting}>
-                {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
-                Download PDF <ChevronDown className="w-3 h-3 opacity-60" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleExport("pdf")}>PDF</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("html")}>HTML</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("docx")}>Word (DOCX)</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport("md")}>Markdown</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button variant="ghost" size="sm" className="ml-auto gap-1.5" onClick={() => router.push("/sops")}>
-            View in Library →
-          </Button>
-        </div>
-
-        {/* AI chat bar */}
-        <div className="px-3 py-3 md:px-6">
-          <div className="flex items-center gap-2 bg-muted/50 border border-border rounded-xl px-4 py-2.5">
-            <input
-              value={aiMsg}
-              onChange={(e) => setAiMsg(e.target.value)}
-              placeholder="Ask AI to improve, expand, or generate SOP content…"
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-              onKeyDown={(e) => { if (e.key === "Enter" && aiMsg.trim()) { setActiveTab("assistant"); setAiMsg(""); } }}
-            />
-            <div className="flex items-center gap-1.5 shrink-0">
-              {[
-                { label: "Improve this SOP", action: () => setActiveTab("assistant") },
-                { label: "Add checklist",    action: () => setActiveTab("checklist") },
-                { label: "Generate workflow", action: () => setActiveTab("workflow") },
-                { label: "Summarize",        action: () => setActiveTab("insights") },
-              ].map((btn) => (
-                <button key={btn.label} onClick={btn.action}
-                  className="text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg px-2.5 py-1 hover:bg-background transition-colors whitespace-nowrap">
-                  {btn.label}
-                </button>
-              ))}
-              <button
-                onClick={() => { if (aiMsg.trim()) { setActiveTab("assistant"); setAiMsg(""); } }}
-                className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-90 transition-opacity"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-          <p className="text-[11px] text-muted-foreground text-center mt-2">AI can make mistakes. Verify important information.</p>
         </div>
       </div>
 

@@ -21,14 +21,14 @@ const LANGUAGES = [
 ];
 
 const IMPROVE_ACTIONS = [
-  { value: "improve",   label: "Improve Writing", icon: <Wand2 className="w-3.5 h-3.5" /> },
-  { value: "rewrite",   label: "Rewrite",          icon: <FileText className="w-3.5 h-3.5" /> },
-  { value: "grammar",   label: "Fix Grammar",      icon: <CheckSquare className="w-3.5 h-3.5" /> },
-  { value: "summarize", label: "Summarize",         icon: <Maximize2 className="w-3.5 h-3.5" /> },
-  { value: "simplify",  label: "Simplify",          icon: <BookOpen className="w-3.5 h-3.5" /> },
+  { value: "improve",   label: "Improve Writing" },
+  { value: "rewrite",   label: "Rewrite"          },
+  { value: "grammar",   label: "Fix Grammar"      },
+  { value: "summarize", label: "Summarize"         },
+  { value: "simplify",  label: "Simplify"          },
 ];
 
-type Tab = "explain" | "chat" | "translate" | "improve";
+type Tab = "chat" | "improve";
 
 interface Message {
   role: "user" | "assistant";
@@ -46,7 +46,7 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 export function SOPAIAssistant({ sopId }: { sopId: string }) {
-  const [activeTab, setActiveTab] = useState<Tab>("explain");
+  const [activeTab, setActiveTab] = useState<Tab>("chat");
 
   // Explain state
   const [explainResult, setExplainResult] = useState("");
@@ -181,11 +181,9 @@ export function SOPAIAssistant({ sopId }: { sopId: string }) {
     toast.success("Copied to clipboard");
   };
 
-  const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: "explain",   label: "Plain English",  icon: <BookOpen className="w-3.5 h-3.5" /> },
-    { key: "chat",      label: "Ask AI",          icon: <MessageSquare className="w-3.5 h-3.5" /> },
-    { key: "translate", label: "Translate",       icon: <Languages className="w-3.5 h-3.5" /> },
-    { key: "improve",   label: "Improve",         icon: <Wand2 className="w-3.5 h-3.5" /> },
+  const TABS: { key: Tab; label: string }[] = [
+    { key: "chat",    label: "Ask AI"  },
+    { key: "improve", label: "Improve" },
   ];
 
   return (
@@ -202,62 +200,18 @@ export function SOPAIAssistant({ sopId }: { sopId: string }) {
                 : "bg-background hover:bg-muted text-muted-foreground"
             }`}
           >
-            {t.icon} <span className="hidden sm:inline">{t.label}</span>
+            {t.label}
           </button>
         ))}
       </div>
-
-      {/* ── Plain English ─────────────────────────────────────── */}
-      {activeTab === "explain" && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-blue-500" /> Plain English Explanation
-              </CardTitle>
-              {explainResult && (
-                <button
-                  onClick={() => setExplainExpanded(!explainExpanded)}
-                  className="text-xs text-muted-foreground flex items-center gap-1 hover:text-foreground"
-                >
-                  {explainExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                  {explainExpanded ? "Collapse" : "Expand"}
-                </button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              AI reads the entire SOP and explains it in simple language any employee can understand — no jargon.
-            </p>
-
-            <Button className="w-full" size="sm" onClick={handleExplain} disabled={explainLoading}>
-              {explainLoading
-                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Explaining…</>
-                : <><Sparkles className="w-3.5 h-3.5 mr-1.5" />{explainResult ? "Regenerate Explanation" : "Explain This SOP"}</>}
-            </Button>
-
-            {explainResult && explainExpanded && (
-              <div className="space-y-2">
-                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto text-blue-900 dark:text-blue-200">
-                  {explainResult}
-                </div>
-                <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={() => copyText(explainResult)}>
-                  <Copy className="w-3 h-3 mr-1.5" /> Copy explanation
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* ── Ask AI (Chat) ─────────────────────────────────────── */}
       {activeTab === "chat" && (
         <Card className="flex flex-col">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Bot className="w-4 h-4 text-purple-500" /> Ask about this SOP
-              <Badge className="text-[10px] bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+              Ask about this SOP
+              <Badge className="text-[10px]" variant="secondary">
                 Context-aware
               </Badge>
             </CardTitle>
@@ -270,11 +224,11 @@ export function SOPAIAssistant({ sopId }: { sopId: string }) {
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                     msg.role === "user"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-purple-100 dark:bg-purple-900/30"
+                      : "bg-muted"
                   }`}>
                     {msg.role === "user"
                       ? <User className="w-3.5 h-3.5" />
-                      : <Bot className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />}
+                      : <Bot className="w-3.5 h-3.5 text-muted-foreground" />}
                   </div>
                   <div className={`flex-1 min-w-0 ${msg.role === "user" ? "text-right" : ""}`}>
                     <div className={`inline-block max-w-[85%] px-3 py-2 rounded-lg text-xs leading-relaxed ${
@@ -291,7 +245,7 @@ export function SOPAIAssistant({ sopId }: { sopId: string }) {
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {msg.sources.map((s, si) => (
                           <Badge key={si} variant="outline" className="text-[9px]">
-                            📄 {s.section}
+                            {s.section}
                           </Badge>
                         ))}
                       </div>
@@ -339,52 +293,11 @@ export function SOPAIAssistant({ sopId }: { sopId: string }) {
         </Card>
       )}
 
-      {/* ── Translate ─────────────────────────────────────────── */}
-      {activeTab === "translate" && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Languages className="w-4 h-4 text-green-500" /> Translate Section
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Target Language</Label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LANGUAGES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Text to Translate</Label>
-              <Textarea value={translateText} onChange={(e) => setTranslateText(e.target.value)} placeholder="Paste section content here…" rows={4} className="text-sm" />
-            </div>
-            <Button className="w-full" size="sm" onClick={handleTranslate} disabled={translateLoading || !translateText.trim()}>
-              {translateLoading ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Translating…</> : <><Languages className="w-3.5 h-3.5 mr-1.5" />Translate to {language}</>}
-            </Button>
-            {translateResult && (
-              <div className="space-y-2">
-                <div className="bg-muted/60 rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">{translateResult}</div>
-                <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={() => copyText(translateResult)}>
-                  <Copy className="w-3 h-3 mr-1.5" /> Copy
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       {/* ── Improve ───────────────────────────────────────────── */}
       {activeTab === "improve" && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Wand2 className="w-4 h-4 text-purple-500" /> Improve Writing
-            </CardTitle>
+            <CardTitle className="text-sm">Improve Writing</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
@@ -392,11 +305,11 @@ export function SOPAIAssistant({ sopId }: { sopId: string }) {
                 <button
                   key={a.value}
                   onClick={() => setImproveAction(a.value)}
-                  className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs transition-colors ${
+                  className={`px-2 py-1.5 rounded-lg border text-xs transition-colors ${
                     improveAction === a.value ? "border-primary bg-primary/5 text-primary font-medium" : "border-border hover:bg-muted"
                   }`}
                 >
-                  {a.icon} {a.label}
+                  {a.label}
                 </button>
               ))}
             </div>

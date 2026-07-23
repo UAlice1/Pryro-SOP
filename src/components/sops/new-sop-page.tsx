@@ -147,12 +147,12 @@ export function NewSOPPage() {
       {/* Form card */}
       <div className="flex-1 flex items-start justify-center px-6 pb-10">
         <div className="w-full max-w-2xl">
-          <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-card border border-border rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.08)] overflow-hidden">
 
             {/* Card header with icon */}
             <div className="flex items-center gap-3 px-7 pt-6 pb-5">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <FileText className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h2 className="text-base font-semibold">Create New SOP</h2>
@@ -226,7 +226,7 @@ export function NewSOPPage() {
               {savingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
               Save Draft
             </Button>
-            <Button type="button" onClick={onGenerate} disabled={loading || savingDraft} className="gap-2 bg-primary text-primary-foreground">
+            <Button type="button" onClick={onGenerate} disabled={loading || savingDraft} className="gap-2">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               {loading ? "Generating…" : "Generate with AI"}
             </Button>

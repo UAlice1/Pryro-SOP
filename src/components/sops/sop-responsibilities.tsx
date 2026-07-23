@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Save, Sparkles, Loader2, Users } from "lucide-react";
+import { Plus, Trash2, Save, Loader2, Users } from "lucide-react";
 
 interface Responsibility { id?: string; role: string; description: string; order: number }
 
@@ -88,11 +88,11 @@ export function SOPResponsibilities({
               variant="outline"
               onClick={handleGenerate}
               disabled={generating}
-              className="gap-1.5 text-purple-700 border-purple-200 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-800 dark:hover:bg-purple-950/30"
+              className="gap-1.5"
             >
               {generating
                 ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating…</>
-                : <><Sparkles className="w-3.5 h-3.5" />AI Generate</>}
+                : <>AI Generate</>}
             </Button>
           )}
           <Button size="sm" variant="outline" onClick={addItem} disabled={blocked}>

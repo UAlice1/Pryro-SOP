@@ -16,6 +16,7 @@ import {
 import {
   Plus, Search, FileText, Sparkles, Star, MoreHorizontal,
   Copy, Archive, Trash2, Eye, Filter, X, Tag, ChevronDown,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { STATUS_LABELS, STATUS_COLORS, timeAgo, truncate } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -350,14 +351,14 @@ export function SOPsClient() {
           <div className="space-y-2">
             {sops.map((sop, i) => (
               <motion.div key={sop.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ delay: i * 0.03 }}>
-                <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl hover:border-primary/30 hover:shadow-sm transition-all group">
+                <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl hover:border-border hover:shadow-sm transition-all group">
                   <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
                     <FileText className="w-4 h-4 text-muted-foreground" />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <Link href={`/sops/${sop.id}`} className="font-medium text-sm hover:text-primary truncate">
+                      <Link href={`/sops/${sop.id}`} className="font-medium text-sm hover:text-foreground truncate">
                         {sop.title}
                       </Link>
                       {sop.isFavorite && <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500 shrink-0" />}
@@ -443,31 +444,13 @@ export function SOPsClient() {
             Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, total)}–{Math.min(currentPage * PAGE_SIZE, total)} of {total} SOPs
           </p>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" className="h-8 px-3 text-xs"
+            <Button variant="outline" size="icon" className="h-8 w-8"
               disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
-              Previous
+              <ChevronLeft className="w-4 h-4" />
             </Button>
-            {Array.from({ length: Math.ceil(total / PAGE_SIZE) }, (_, i) => i + 1)
-              .filter((p) => p === 1 || p === Math.ceil(total / PAGE_SIZE) || Math.abs(p - currentPage) <= 1)
-              .reduce<(number | "...")[]>((acc, p, i, arr) => {
-                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("...");
-                acc.push(p);
-                return acc;
-              }, [])
-              .map((p, i) =>
-                p === "..." ? (
-                  <span key={`e-${i}`} className="px-2 text-xs text-muted-foreground">…</span>
-                ) : (
-                  <Button key={p} variant={currentPage === p ? "default" : "outline"}
-                    size="sm" className="h-8 w-8 p-0 text-xs"
-                    onClick={() => setCurrentPage(p as number)}>
-                    {p}
-                  </Button>
-                )
-              )}
-            <Button variant="outline" size="sm" className="h-8 px-3 text-xs"
+            <Button variant="outline" size="icon" className="h-8 w-8"
               disabled={currentPage >= Math.ceil(total / PAGE_SIZE)} onClick={() => setCurrentPage((p) => p + 1)}>
-              Next
+              <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </div>

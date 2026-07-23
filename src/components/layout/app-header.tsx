@@ -30,7 +30,7 @@ export function AppHeader({ user }: { user: AuthUser }) {
 
         <Avatar className="w-8 h-8 ml-1 cursor-pointer">
           <AvatarImage src={user.image ?? ""} />
-          <AvatarFallback className="text-xs bg-primary/10 text-primary">{initials}</AvatarFallback>
+          <AvatarFallback className="text-xs bg-primary text-primary-foreground">{initials}</AvatarFallback>
         </Avatar>
       </div>
     </header>

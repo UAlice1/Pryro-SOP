@@ -37,7 +37,7 @@ function EmailChip({ email, onRemove }: { email: string; onRemove: () => void })
   return (
     <span className={cn(
       "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium",
-      "bg-[#ececec] text-[#0d0d0d] dark:bg-[#3c3c3c] dark:text-[#ffffff]",
+      "bg-primary-light text-primary dark:bg-primary/20 dark:text-primary",
     )}>
       {email}
       <button
@@ -70,8 +70,8 @@ function ResultRow({ result }: { result: InviteResult }) {
       <span className={cn(
         "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
         result.status === "invited"
-          ? "bg-[#ececec] text-[#0d0d0d] dark:bg-[#3c3c3c] dark:text-[#ffffff]"
-          : "bg-[#f4f4f4] text-[#b4b4b4] dark:bg-[#2f2f2f] dark:text-[#b4b4b4]",
+          ? "bg-primary-light text-primary"
+          : "bg-muted text-muted-foreground",
       )}>
         {label}
       </span>
@@ -205,9 +205,9 @@ export function InviteStaffDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className={cn(
         "max-w-md rounded-2xl",
-        "bg-white dark:bg-[#2f2f2f]",
-        "border border-[#e3e3e3] dark:border-[#3c3c3c]",
-        "shadow-[0_8px_40px_-8px_rgba(0,0,0,0.18)]",
+        "bg-white dark:bg-card",
+        "border border-border",
+        "shadow-card-lg",
       )}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
@@ -215,7 +215,7 @@ export function InviteStaffDialog({
             Invite Staff Members
           </DialogTitle>
           {sopTitle && (
-            <DialogDescription className="text-xs text-[#676767] dark:text-[#b4b4b4] truncate">
+            <DialogDescription className="text-xs text-muted-foreground truncate">
               {sopTitle}
             </DialogDescription>
           )}
@@ -223,7 +223,7 @@ export function InviteStaffDialog({
 
         {!results ? (
           <div className="space-y-4 pt-1">
-            <p className="text-xs text-[#676767] dark:text-[#b4b4b4]">
+            <p className="text-xs text-muted-foreground">
               Enter email addresses and optionally assign an AI-generated role. Invited staff will receive a magic link to their execution workspace.
             </p>
 
@@ -236,8 +236,8 @@ export function InviteStaffDialog({
               >
                 <SelectTrigger className={cn(
                   "h-9 text-xs w-full",
-                  "bg-[#f4f4f4] dark:bg-[#212121]",
-                  "border border-[#e3e3e3] dark:border-[#3c3c3c]",
+                  "bg-muted",
+                  "border border-border",
                 )}>
                   <SelectValue placeholder="Select a role (optional)">
                     {selectedRole ? (selectedRole.roleName ?? selectedRole.role) : "Select a role (optional)"}
@@ -268,9 +268,9 @@ export function InviteStaffDialog({
               <div
                 className={cn(
                   "min-h-[72px] w-full flex flex-wrap gap-1.5 p-2.5 rounded-xl cursor-text",
-                  "bg-[#f4f4f4] dark:bg-[#212121]",
-                  "border border-[#e3e3e3] dark:border-[#3c3c3c]",
-                  "focus-within:border-[#c8c8c8] dark:focus-within:border-[#555555]",
+                  "bg-muted",
+                  "border border-border",
+                  "focus-within:border-primary",
                   "transition-colors",
                 )}
                 onClick={() => inputRef.current?.focus()}
@@ -293,22 +293,22 @@ export function InviteStaffDialog({
                   placeholder={emails.length === 0 ? "name@company.com, another@company.com…" : "Add more…"}
                   className={cn(
                     "flex-1 min-w-[180px] bg-transparent text-sm outline-none",
-                    "text-foreground placeholder:text-[#b4b4b4]",
+                    "text-foreground placeholder:text-muted-foreground",
                   )}
                   aria-label="Email address input"
                 />
               </div>
-              <p className="text-[10px] text-[#b4b4b4]">
+              <p className="text-[10px] text-muted-foreground">
                 Press{" "}
-                <kbd className="px-1 py-0.5 rounded bg-[#ececec] dark:bg-[#3c3c3c] font-mono text-[9px]">Enter</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-muted font-mono text-[9px]">Enter</kbd>
                 {" "}or{" "}
-                <kbd className="px-1 py-0.5 rounded bg-[#ececec] dark:bg-[#3c3c3c] font-mono text-[9px]">,</kbd>
+                <kbd className="px-1 py-0.5 rounded bg-muted font-mono text-[9px]">,</kbd>
                 {" "}to add. Paste a comma-separated list to bulk-add.
               </p>
             </div>
 
             <div className="flex items-center justify-between gap-2 pt-1">
-              <span className="text-xs text-[#b4b4b4]">
+              <span className="text-xs text-muted-foreground">
                 {emails.length > 0 ? `${emails.length} recipient${emails.length > 1 ? "s" : ""}` : "No recipients yet"}
               </span>
               <div className="flex gap-2">
@@ -319,12 +319,7 @@ export function InviteStaffDialog({
                   size="sm"
                   disabled={sending || (emails.length === 0 && !inputValue.trim())}
                   onClick={handleSend}
-                  className={cn(
-                    "h-8 px-4 text-xs gap-1.5",
-                    "bg-[#0d0d0d] text-white hover:bg-[#2f2f2f]",
-                    "dark:bg-[#ffffff] dark:text-[#0d0d0d] dark:hover:bg-[#ececec]",
-                    "border-0 shadow-none",
-                  )}
+                  className="h-8 px-4 text-xs gap-1.5"
                 >
                   {sending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                   {sending ? "Sending…" : "Send Invitations"}
@@ -335,15 +330,15 @@ export function InviteStaffDialog({
         ) : (
           /* Results stage */
           <div className="space-y-4 pt-1">
-            <p className="text-xs text-[#676767] dark:text-[#b4b4b4]">
+            <p className="text-xs text-muted-foreground">
               Invitation summary — staff members found in your organisation have been sent a magic link.
             </p>
 
             <div className={cn(
               "rounded-xl divide-y",
-              "bg-[#f9f9f9] dark:bg-[#212121]",
-              "border border-[#e3e3e3] dark:border-[#3c3c3c]",
-              "divide-[#e3e3e3] dark:divide-[#3c3c3c]",
+              "bg-muted",
+              "border border-border",
+              "divide-border",
             )}>
               {results.map((r) => (
                 <div key={r.email} className="px-3">
@@ -353,7 +348,7 @@ export function InviteStaffDialog({
             </div>
 
             {results.some((r) => r.status === "not_found") && (
-              <p className="text-[11px] text-[#b4b4b4] leading-relaxed">
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
                 Addresses marked <strong className="text-foreground">&ldquo;Not in org&rdquo;</strong> are not registered
                 in your workspace. Ask them to create an account first, then re-invite.
               </p>
@@ -371,12 +366,7 @@ export function InviteStaffDialog({
               <Button
                 size="sm"
                 onClick={handleClose}
-                className={cn(
-                  "h-8 px-4 text-xs",
-                  "bg-[#0d0d0d] text-white hover:bg-[#2f2f2f]",
-                  "dark:bg-[#ffffff] dark:text-[#0d0d0d] dark:hover:bg-[#ececec]",
-                  "border-0 shadow-none",
-                )}
+                className="h-8 px-4 text-xs"
               >
                 Done
               </Button>

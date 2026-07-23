@@ -1,27 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-/**
- * Next.js 16 proxy (replaces middleware.ts).
- *
- * Uses next-auth/jwt getToken() to read the session JWT directly from the
- * cookie — no HTTP round-trip, no circular dependency with the auth handler.
- *
- * Responsibilities:
- *  1. Pass /api/auth/** through untouched (NextAuth endpoints).
- *  2. Redirect authenticated users away from /login and /register.
- *  3. Redirect unauthenticated users to /login for page routes.
- *  4. Return 401 for unauthenticated API requests.
- *  5. Guard /api/admin/** to ORG_ADMIN / SUPER_ADMIN only.
- *  6. Reject org-scoped API calls from users with no organization.
- */
-
 const AUTH_API_PREFIX  = "/api/auth";
 const ADMIN_API_PREFIX = "/api/admin";
 const PUBLIC_PAGES     = ["/login", "/register"];
 
-// These API routes work without an organizationId — either user-scoped
-// or routes that handle the "no org" case themselves
 const ORG_EXEMPT_API = [
   "/api/auth",
   "/api/register",
@@ -50,19 +33,23 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── Read JWT directly from cookie (Edge-safe, no DB call) ─────────────────
+  // ── Read JWT directly from cookie ─────────────────────────────────────────
   const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
 
-  // NextAuth v5 uses "authjs.session-token" (HTTP) or "__Secure-authjs.session-token" (HTTPS)
-  const isSecure = req.url.startsWith("https://");
-  const cookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
+  let token = null;
+  try {
+    // Try NextAuth v5 cookie name first
+    const isSecure = req.url.startsWith("https://");
+    const cookieName = isSecure ? "__Secure-authjs.session-token" : "authjs.session-token";
+    token = await getToken({ req, secret, cookieName, salt: cookieName });
 
-  const token = await getToken({
-    req,
-    secret,
-    cookieName,
-    salt: cookieName,
-  }).catch(() => null);
+    // Fallback to v4 cookie name
+    if (!token) {
+      token = await getToken({ req, secret });
+    }
+  } catch {
+    token = null;
+  }
 
   const isAuthenticated = !!token;
   const role  = (token?.role  as string | undefined) ?? "EMPLOYEE";
@@ -71,7 +58,7 @@ export default async function proxy(req: NextRequest) {
   // ── 2. Auth pages — redirect logged-in users to dashboard ─────────────────
   if (PUBLIC_PAGES.includes(pathname)) {
     if (isAuthenticated) {
-      return NextResponse.redirect(new URL("/sops/new", req.url));
+      return NextResponse.redirect(new URL("/sops", req.url));
     }
     return NextResponse.next();
   }
@@ -111,7 +98,6 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Exclude static assets; run on all pages and API routes
   matcher: [
     "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],

@@ -46,11 +46,11 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export const STATUS_COLORS: Record<string, string> = {
-  DRAFT: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  REVIEW: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  APPROVED: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  PUBLISHED: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
-  ARCHIVED: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  DRAFT: "bg-yellow-400 text-yellow-900",
+  REVIEW: "bg-blue-500 text-white",
+  APPROVED: "bg-green-500 text-white",
+  PUBLISHED: "bg-emerald-600 text-white",
+  ARCHIVED: "bg-gray-500 text-white",
 };
 
 export const ROLE_LABELS: Record<string, string> = {

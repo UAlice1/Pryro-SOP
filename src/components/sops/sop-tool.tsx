@@ -71,14 +71,6 @@ const parameters = z.object({
 type SOPArgs   = z.infer<typeof parameters>;
 type SOPResult = { sopId: string; error?: undefined } | { sopId: null; error: string };
 
-/* ─── Monochrome priority badge styles ───────────────────────────────────── */
-// No reds/yellows/blues — pure grayscale tiers
-const priorityStyle: Record<string, string> = {
-  High:   "bg-[#3c3c3c] text-[#ffffff] dark:bg-[#3c3c3c] dark:text-[#ffffff]",
-  Medium: "bg-[#555555] text-[#e3e3e3] dark:bg-[#555555] dark:text-[#e3e3e3]",
-  Low:    "bg-[#2f2f2f] text-[#b4b4b4] dark:bg-[#2f2f2f] dark:text-[#b4b4b4]",
-};
-
 /* ─── Render component ───────────────────────────────────────────────────── */
 
 const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
@@ -151,35 +143,35 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
     */
     <div className={cn(
       "my-3 w-full max-w-2xl rounded-xl overflow-hidden",
-      "bg-white dark:bg-[#2f2f2f]",
-      "border border-[#e3e3e3] dark:border-[#3c3c3c]",
-      "shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_12px_-4px_rgba(0,0,0,0.5)]",
+      "bg-card",
+      "border border-border",
+      "shadow-card",
     )}>
 
       {/* ── Panel header ────────────────────────────────────── */}
       <div className={cn(
         "flex items-center justify-between gap-3 px-4 py-3",
-        "border-b border-[#e3e3e3] dark:border-[#3c3c3c]",
-        "bg-[#f9f9f9] dark:bg-[#171717]",
+        "border-b border-border",
+        "bg-muted",
       )}>
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
-            {/* AI Generated badge — flat dark gray */}
-            <Badge className="text-[10px] bg-[#2f2f2f] text-[#b4b4b4] border-0 dark:bg-[#3c3c3c] dark:text-[#b4b4b4]">
+            {/* AI Generated badge */}
+            <Badge variant="secondary" className="text-[10px]">
               AI Generated
             </Badge>
             {args.industry && (
-              <Badge className="text-[10px] bg-[#ececec] text-[#676767] border-0 dark:bg-[#3c3c3c] dark:text-[#b4b4b4]">
+              <Badge variant="secondary" className="text-[10px]">
                 {args.industry}
               </Badge>
             )}
             {args.complianceFramework && (
-              <Badge className="text-[10px] bg-[#ececec] text-[#676767] border-0 dark:bg-[#3c3c3c] dark:text-[#b4b4b4]">
+              <Badge variant="secondary" className="text-[10px]">
                 {args.complianceFramework}
               </Badge>
             )}
             {published && (
-              <Badge className="text-[10px] bg-[#ececec] text-[#0d0d0d] border-0 dark:bg-[#3c3c3c] dark:text-[#ffffff]">
+              <Badge className="text-[10px]">
                 <CheckCircle className="w-2.5 h-2.5 mr-1" /> Published
               </Badge>
             )}
@@ -188,13 +180,13 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
             {args.title || "Generating SOP…"}
           </h2>
           {args.description && (
-            <p className="text-xs text-[#676767] dark:text-[#b4b4b4] mt-0.5 line-clamp-1">
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
               {args.description}
             </p>
           )}
         </div>
         {isStreaming && (
-          <Loader2 className="w-4 h-4 animate-spin text-[#b4b4b4] shrink-0" />
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />
         )}
       </div>
 
@@ -202,8 +194,8 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
       <Tabs defaultValue="workflow" className="w-full">
         <TabsList className={cn(
           "w-full rounded-none h-9 px-2 justify-start gap-0.5 overflow-x-auto",
-          "border-b border-[#e3e3e3] dark:border-[#3c3c3c]",
-          "bg-[#f4f4f4] dark:bg-[#171717]",
+          "border-b border-border",
+          "bg-muted",
         )}>
           {[
             { value: "workflow",         icon: BookOpen,    label: "Workflow"    },
@@ -216,9 +208,8 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
               value={value}
               className={cn(
                 "text-xs gap-1.5 h-7 rounded-md px-2.5",
-                "text-[#676767] dark:text-[#b4b4b4]",
-                "data-[state=active]:bg-[#ffffff] data-[state=active]:text-[#0d0d0d]",
-                "dark:data-[state=active]:bg-[#2f2f2f] dark:data-[state=active]:text-[#ffffff]",
+                "text-muted-foreground",
+                "data-[state=active]:bg-background data-[state=active]:text-primary",
                 "data-[state=active]:shadow-none",
               )}
             >
@@ -230,21 +221,21 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
         {/* Tab 1: Workflow */}
         <TabsContent value="workflow" className="mt-0 p-4 max-h-80 overflow-y-auto space-y-2">
           {!args.workflow?.length ? (
-            <p className="text-xs text-[#676767] dark:text-[#b4b4b4] text-center py-6">
+            <p className="text-xs text-muted-foreground text-center py-6">
               {isStreaming ? "Generating workflow…" : "No workflow steps"}
             </p>
           ) : (
             <div className="relative">
               {/* Timeline spine */}
-              <div className="absolute left-[15px] top-2 bottom-2 w-px bg-[#e3e3e3] dark:bg-[#3c3c3c]" />
+              <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
               <div className="space-y-3">
                 {args.workflow.map((step, i) => (
                   <div key={i} className="relative flex gap-3 pl-1">
-                    {/* Step number circle — solid dark fill */}
+                    {/* Step number circle — primary blue */}
                     <div className={cn(
                       "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 z-10",
-                      "bg-[#0d0d0d] text-[#ffffff] dark:bg-[#ffffff] dark:text-[#0d0d0d]",
-                      "ring-2 ring-[#ffffff] dark:ring-[#212121]",
+                      "bg-primary text-primary-foreground",
+                      "ring-2 ring-background",
                     )}>
                       {step.stepNumber}
                     </div>
@@ -252,28 +243,28 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
                       <div className="flex items-center gap-2 flex-wrap mb-0.5">
                         <span className="text-sm font-medium text-foreground">{step.title}</span>
                         {step.phase && (
-                          <Badge className="text-[10px] bg-[#ececec] text-[#676767] border-0 dark:bg-[#3c3c3c] dark:text-[#b4b4b4]">
+                          <Badge variant="secondary" className="text-[10px]">
                             {step.phase}
                           </Badge>
                         )}
                         {step.role && (
-                          <Badge className="text-[10px] bg-[#2f2f2f] text-[#b4b4b4] border-0 dark:bg-[#3c3c3c] dark:text-[#b4b4b4]">
+                          <Badge variant="secondary" className="text-[10px]">
                             {step.role}
                           </Badge>
                         )}
                         {step.duration && (
-                          <span className="text-[10px] text-[#676767] dark:text-[#b4b4b4] flex items-center gap-0.5">
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                             <Clock className="w-2.5 h-2.5" /> {step.duration}
                           </span>
                         )}
                       </div>
                       {step.description && (
-                        <p className="text-xs text-[#676767] dark:text-[#b4b4b4] leading-relaxed">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
                           {step.description}
                         </p>
                       )}
                       {step.dependsOn && step.dependsOn.length > 0 && (
-                        <p className="text-[10px] text-[#b4b4b4] mt-0.5">
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
                           Depends on step{step.dependsOn.length > 1 ? "s" : ""}: {step.dependsOn.join(", ")}
                         </p>
                       )}
@@ -288,7 +279,7 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
         {/* Tab 2: Checklist */}
         <TabsContent value="checklist" className="mt-0 p-4 max-h-80 overflow-y-auto">
           {!args.checklist?.length ? (
-            <p className="text-xs text-[#676767] dark:text-[#b4b4b4] text-center py-6">
+            <p className="text-xs text-muted-foreground text-center py-6">
               {isStreaming ? "Generating checklist…" : "No checklist items"}
             </p>
           ) : (
@@ -302,9 +293,8 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
                   <div key={priority ?? "other"} className="space-y-1">
                     {priority && (
                       <div className="flex items-center gap-1.5 mb-1 mt-2 first:mt-0">
-                        {/* Priority icons use neutral gray instead of red/yellow/blue */}
-                        <AlertTriangle className="w-3 h-3 text-[#b4b4b4]" />
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[#b4b4b4]">
+                        <AlertTriangle className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                           {priority} Priority
                         </span>
                       </div>
@@ -318,8 +308,8 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
                             "flex items-start gap-2.5 px-3 py-2 rounded-lg border transition-colors",
                             "border-[#e3e3e3] dark:border-[#3c3c3c]",
                             checked[i]
-                              ? "bg-[#f4f4f4] dark:bg-[#171717]"
-                              : "bg-white dark:bg-[#2f2f2f]",
+                              ? "bg-muted"
+                              : "bg-card",
                           )}
                         >
                           <Checkbox
@@ -343,12 +333,12 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
                             </label>
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                               {item.assignedRole && (
-                                <Badge className="text-[9px] h-4 px-1.5 bg-[#ececec] text-[#676767] border-0 dark:bg-[#3c3c3c] dark:text-[#b4b4b4]">
+                                <Badge variant="secondary" className="text-[9px] h-4 px-1.5">
                                   {item.assignedRole}
                                 </Badge>
                               )}
                               {item.priority && (
-                                <Badge className={cn("text-[9px] h-4 px-1.5 border-0", priorityStyle[item.priority])}>
+                                <Badge variant="secondary" className="text-[9px] h-4 px-1.5">
                                   {item.priority}
                                 </Badge>
                               )}
@@ -367,7 +357,7 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
         {/* Tab 3: Responsibilities */}
         <TabsContent value="responsibilities" className="mt-0 p-4 max-h-80 overflow-y-auto">
           {!args.responsibilities?.length ? (
-            <p className="text-xs text-[#676767] dark:text-[#b4b4b4] text-center py-6">
+            <p className="text-xs text-muted-foreground text-center py-6">
               {isStreaming ? "Generating responsibilities…" : "No responsibilities defined"}
             </p>
           ) : (
@@ -375,18 +365,14 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
               {args.responsibilities.map((r, i) => (
                 <Card
                   key={i}
-                  className={cn(
-                    "border-[#e3e3e3] dark:border-[#3c3c3c]",
-                    "bg-[#f9f9f9] dark:bg-[#171717]",
-                    "shadow-none",
-                  )}
+                  className="shadow-none"
                 >
                   <CardHeader className="pb-1.5 pt-3 px-3">
                     <CardTitle className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
-                      {/* Role avatar — flat monochrome circle */}
+                      {/* Role avatar — primary blue */}
                       <div className={cn(
                         "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0",
-                        "bg-[#0d0d0d] text-[#ffffff] dark:bg-[#ffffff] dark:text-[#0d0d0d]",
+                        "bg-primary text-primary-foreground",
                       )}>
                         {(r.roleName ?? r.role)[0].toUpperCase()}
                       </div>
@@ -394,7 +380,7 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="px-3 pb-3 pt-0">
-                    <p className="text-[11px] text-[#676767] dark:text-[#b4b4b4] leading-relaxed">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
                       {r.coreDutySummary ?? r.description ?? "—"}
                     </p>
                   </CardContent>
@@ -407,14 +393,14 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
         {/* Tab 4: Manual / Documentation */}
         <TabsContent value="documentation" className="mt-0 p-4 max-h-80 overflow-y-auto">
           {!args.documentation ? (
-            <p className="text-xs text-[#676767] dark:text-[#b4b4b4] text-center py-6">
+            <p className="text-xs text-muted-foreground text-center py-6">
               {isStreaming ? "Generating documentation…" : "No documentation yet"}
             </p>
           ) : (
             <div className="space-y-4 text-sm">
               {args.documentation.objective && (
                 <section>
-                  <h3 className="font-semibold text-[10px] uppercase tracking-widest text-[#676767] dark:text-[#b4b4b4] mb-1.5">
+                  <h3 className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
                     Objective
                   </h3>
                   <p className="text-sm leading-relaxed text-foreground">
@@ -424,7 +410,7 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
               )}
               {args.documentation.scope && (
                 <section>
-                  <h3 className="font-semibold text-[10px] uppercase tracking-widest text-[#676767] dark:text-[#b4b4b4] mb-1.5">
+                  <h3 className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
                     Scope
                   </h3>
                   <p className="text-sm leading-relaxed text-foreground">
@@ -433,13 +419,8 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
                 </section>
               )}
               {args.documentation.safetyOrComplianceNotes && (
-                /* Safety block — neutral dark box instead of amber */
-                <section className={cn(
-                  "rounded-lg p-3",
-                  "bg-[#f4f4f4] dark:bg-[#171717]",
-                  "border border-[#e3e3e3] dark:border-[#3c3c3c]",
-                )}>
-                  <h3 className="font-semibold text-[10px] flex items-center gap-1.5 uppercase tracking-widest text-[#676767] dark:text-[#b4b4b4] mb-1.5">
+                <section className="rounded-lg p-3 bg-muted border border-border">
+                  <h3 className="font-semibold text-[10px] flex items-center gap-1.5 uppercase tracking-widest text-muted-foreground mb-1.5">
                     <ShieldCheck className="w-3.5 h-3.5" /> Safety &amp; Compliance
                   </h3>
                   <p className="text-xs text-foreground leading-relaxed">
@@ -449,7 +430,7 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
               )}
               {args.documentation.detailedProcedureMarkdown && (
                 <section>
-                  <h3 className="font-semibold text-[10px] uppercase tracking-widest text-[#676767] dark:text-[#b4b4b4] mb-2">
+                  <h3 className="font-semibold text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
                     Detailed Procedure
                   </h3>
                   <div className="prose prose-sm dark:prose-invert max-w-none text-sm">
@@ -468,21 +449,16 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
       {!isStreaming && (
         <div className={cn(
           "flex items-center gap-2 flex-wrap px-4 py-3",
-          "border-t border-[#e3e3e3] dark:border-[#3c3c3c]",
-          "bg-[#f9f9f9] dark:bg-[#171717]",
+          "border-t border-border",
+          "bg-muted",
         )}>
-          {/* Publish button — black fill in light, white fill in dark */}
+          {/* Publish button */}
           {!published ? (
             <Button
               size="sm"
               onClick={handlePublish}
               disabled={publishing || !sopId}
-              className={cn(
-                "h-7 text-xs gap-1.5 rounded-lg",
-                "bg-[#0d0d0d] text-[#ffffff] hover:bg-[#2f2f2f]",
-                "dark:bg-[#ffffff] dark:text-[#0d0d0d] dark:hover:bg-[#ececec]",
-                "border-0 shadow-none",
-              )}
+              className="h-7 text-xs gap-1.5 rounded-lg"
             >
               {publishing
                 ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -490,44 +466,31 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
               {publishing ? "Publishing…" : "Publish"}
             </Button>
           ) : (
-            <span className={cn(
-              "inline-flex items-center gap-1 text-[10px] px-3 h-7 rounded-lg font-medium",
-              "bg-[#ececec] text-[#0d0d0d] dark:bg-[#3c3c3c] dark:text-[#ffffff]",
-            )}>
+            <span className="inline-flex items-center gap-1 text-[10px] px-3 h-7 rounded-lg font-medium bg-primary-light text-primary">
               <CheckCircle className="w-3 h-3" /> Published
             </span>
           )}
 
-          {/* ── Invite staff button ─── */}
+          {/* Invite staff button */}
           <Button
             size="sm"
             variant="outline"
             disabled={!sopId}
             onClick={() => setInviteOpen(true)}
-            className={cn(
-              "h-7 text-xs gap-1.5 rounded-lg",
-              "border-[#e3e3e3] dark:border-[#3c3c3c]",
-              "text-foreground hover:bg-[#ececec] dark:hover:bg-[#2f2f2f]",
-              "shadow-none",
-            )}
+            className="h-7 text-xs gap-1.5 rounded-lg"
           >
             <UserPlus className="w-3 h-3" />
             Invite Staff
           </Button>
 
-          {/* ── Download dropdown ─── */}
+          {/* Download dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 size="sm"
                 variant="outline"
                 disabled={!sopId || !!downloading}
-                className={cn(
-                  "h-7 text-xs gap-1 rounded-lg",
-                  "border-[#e3e3e3] dark:border-[#3c3c3c]",
-                  "text-foreground hover:bg-[#ececec] dark:hover:bg-[#2f2f2f]",
-                  "shadow-none",
-                )}
+                className="h-7 text-xs gap-1 rounded-lg"
               >
                 {downloading
                   ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -536,18 +499,11 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
                 <ChevronDown className="w-2.5 h-2.5 opacity-60" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className={cn(
-                "w-40 rounded-xl",
-                "bg-white dark:bg-[#2f2f2f]",
-                "border border-[#e3e3e3] dark:border-[#3c3c3c]",
-              )}
-            >
-              <DropdownMenuLabel className="text-[10px] text-[#b4b4b4] uppercase tracking-wider px-2.5 pb-1">
+            <DropdownMenuContent align="end" className="w-40 rounded-xl">
+              <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase tracking-wider px-2.5 pb-1">
                 Download as
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-[#e3e3e3] dark:bg-[#3c3c3c]" />
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => handleDownload("pdf")}
                 disabled={!!downloading}
@@ -555,7 +511,7 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
               >
                 <FileDown className="w-3.5 h-3.5" />
                 PDF
-                <span className="ml-auto text-[10px] text-[#b4b4b4]">Recommended</span>
+                <span className="ml-auto text-[10px] text-muted-foreground">Recommended</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleDownload("docx")}
@@ -576,12 +532,12 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* View in library — ghost, far right */}
+          {/* View in library */}
           {sopId && (
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 text-xs gap-1.5 ml-auto text-[#676767] dark:text-[#b4b4b4] hover:text-foreground hover:bg-[#ececec] dark:hover:bg-[#2f2f2f]"
+              className="h-7 text-xs gap-1.5 ml-auto"
               asChild
             >
               <Link href={`/sops/${sopId}`}>

@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Prevent Turbopack/webpack from bundling native Node modules used server-side
+  // Prevent webpack from bundling native Node modules used server-side
   serverExternalPackages: [
     "puppeteer",
     "puppeteer-core",

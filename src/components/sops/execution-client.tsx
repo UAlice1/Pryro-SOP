@@ -351,9 +351,7 @@ export function ExecutionClient({
                             exec.isCompleted && "line-through text-muted-foreground",
                           )}>
                             {exec.checklistItem.text}
-                            {exec.checklistItem.isRequired && (
-                              <span className="ml-1 text-destructive text-xs">*</span>
-                            )}
+
                           </p>
 
                           <div className="flex items-center gap-2 mt-1 flex-wrap">

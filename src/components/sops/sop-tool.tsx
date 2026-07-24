@@ -327,9 +327,7 @@ const SOPGenerativePanel: FC<ToolCallMessagePartProps<SOPArgs, SOPResult>> = ({
                               )}
                             >
                               {item.text}
-                              {item.isRequired && (
-                                <span className="ml-1 text-destructive font-medium">*</span>
-                              )}
+
                             </label>
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                               {item.assignedRole && (

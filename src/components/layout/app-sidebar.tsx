@@ -114,8 +114,8 @@ export function AppSidebarContent({
           <Image
             src="/images/pryro.png"
             alt="Pryro logo"
-            width={52}
-            height={52}
+            width={64}
+            height={64}
             className="rounded-md shrink-0"
           />
           <span className="text-sm font-bold tracking-tight text-[var(--sidebar-foreground)] pb-0.5">SOPs</span>
@@ -228,8 +228,8 @@ function CollapsedSidebar({ user }: { user: NextAuthUser }) {
         <Image
           src="/images/pryro.png"
           alt="Pryro logo"
-          width={36}
-          height={36}
+          width={40}
+          height={40}
           className="rounded-md"
         />
       </button>

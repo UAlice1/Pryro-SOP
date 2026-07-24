@@ -164,7 +164,7 @@ export function NewSOPPage() {
               {/* SOP Title */}
               <div className="space-y-1.5">
                 <Label htmlFor="title" className="text-sm font-medium">
-                  SOP Title <span className="text-destructive">*</span>
+                  SOP Title
                 </Label>
                 <Input
                   id="title"
@@ -178,7 +178,7 @@ export function NewSOPPage() {
               {/* Process Name */}
               <div className="space-y-1.5">
                 <Label htmlFor="processName" className="text-sm font-medium">
-                  Process Name <span className="text-destructive">*</span>
+                  Process Name
                 </Label>
                 <Input
                   id="processName"

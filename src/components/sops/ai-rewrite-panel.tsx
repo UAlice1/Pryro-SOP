@@ -492,7 +492,7 @@ function PreviewContent({ preview }: { preview: { action: AIAction; data: Rewrit
         {data.checklist?.map((item, i) => (
           <div key={i} className="flex items-start gap-2">
             <div className="w-3.5 h-3.5 rounded border border-border mt-0.5 shrink-0" />
-            <span className="text-muted-foreground">{item.text}{item.isRequired && <span className="text-destructive ml-1">*</span>}</span>
+            <span className="text-muted-foreground">{item.text}</span>
           </div>
         ))}
         <p className="text-[10px] text-muted-foreground pt-1">* = Required</p>
